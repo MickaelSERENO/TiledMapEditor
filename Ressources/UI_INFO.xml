@@ -1,0 +1,38 @@
+<ui>
+	<menubar name="MenuBar">
+		<menu action="FileMenu">
+			<menuitem action="NewFile"/>
+			<menuitem action="OpenFile"/>
+			<separator/>
+			<menuitem action="Save"/>
+			<menuitem action="SaveAs"/>
+		</menu>
+
+		<menu action="EditionMenu">
+			<menuitem action="NewCalc"/>
+			<menuitem action="NewImage"/>
+		</menu>
+
+		<menu action="ToolsMenu">
+			<menuitem action="ChangeSize"/>
+		</menu>
+	</menubar>
+
+	<toolbar name="ToolBar">
+		<toolitem action="NewFile"/>
+		<toolitem action="OpenFile"/>
+		<toolitem action="Save"/>
+		<separator/>
+		<toolitem action="Zoom+"/>
+		<toolitem action="Zoom-"/>
+	</toolbar>
+
+	<popup name="SFMLEmptyCase">
+		<menuitem action="NewCalc"/>
+		<menuitem action="NewImage"/>
+	</popup>
+
+	<popup action="SFMLFullCase">
+		<menuitem action="DelCase"/>
+	</popup>
+</ui>
