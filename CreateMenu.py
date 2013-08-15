@@ -137,7 +137,11 @@ class CreateMenu:
 		hbox = Gtk.Box()
 		buttonOK = Gtk.Button(label="OK")
 		buttonCancel = Gtk.Button(label="Cancel")
-		buttonOK.connect("clicked", self.newTileSet)
+		buttonOK.connect("clicked", self.newTileSet, \
+				{'hTileSize':spinTileLeft, 'vTileSize':spinTileRight, \
+				'hTileSpace':spinSpaceLeft, 'vTileSpace':spinSpaceRight, \
+				'imageEntered':imageEntered, 'fileManager':fileManager, \
+				'tileBox':tileBox, 'window':window})
 		buttonCancel.connect("clicked", self.quitWindow, window)
 
 		hbox.pack_start(buttonCancel, False, False, 0)
@@ -148,8 +152,11 @@ class CreateMenu:
 
 		return vgrid
 
-	def newTileSet(self, button, fileManager=None, tileBox=None):
-		pass
+	def newTileSet(self, button, widgets):
+		widgets['tileBox'].cutTileSet(widgets['imageEntered'].get_text(), \
+				sf.Vector2(widgets['hTileSize'].get_value(), widgets['vTileSize'].get_value()), \
+				sf.Vector2(widgets['hTileSpace'].get_value(), widgets['vTileSpace'].get_value()))
+		widgets['window'].destroy()
 
 	def createNewAnnimation(self, window, fileManager, tileBox):
 		grid = Gtk.Grid()
