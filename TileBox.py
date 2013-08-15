@@ -3,6 +3,8 @@ from os import path
 import sfml as sf
 
 class TileBox(Gtk.Paned):
+	fileList = list()
+	dndDatas = None
 	def __init__(self):
 		scrolledWindow = Gtk.ScrolledWindow()
 		Gtk.Paned.__init__(self)
@@ -29,6 +31,12 @@ class TileBox(Gtk.Paned):
 	def cutTileSet(self, tileSetFile, size=sf.Vector2(32, 32), spacing=sf.Vector2(0, 0)):
 		if tileSetFile and path.isfile(tileSetFile):
 			tileSetFile = path.relpath(path.abspath(tileSetFile), path.abspath(path.dirname(__file__)))
+
+			if tileSetFile in TileBox.fileList:
+				return
+			else:
+				TileBox.fileList.append(tileSetFile)
+
 			expander = Gtk.Expander()
 			expander.set_label(tileSetFile)
 
@@ -51,7 +59,7 @@ class TileBox(Gtk.Paned):
 					posX = 0
 					posY += size.y + spacing.y
 				treeStore.append(None, listPixbuf)
-			viewIcon = DragIconView(model=treeStore)
+			viewIcon = DragIconView(model=treeStore, size=size, spacing=spacing)
 			viewIcon.set_columns(5)
 			viewIcon.set_pixbuf_column(0)
 			viewIcon.set_name(tileSetFile)
@@ -61,19 +69,23 @@ class TileBox(Gtk.Paned):
 			self.show_all()
 			
 class DragIconView(Gtk.IconView):
-	def __init__(self, model):
+	def __init__(self, model, size, spacing):
 		Gtk.IconView.__init__(self, model)
+		self.size = size
+		self.spacing = spacing
 		self.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, [], Gdk.DragAction.COPY)
 		self.connect("drag-data-get", self.do_drag_data_get)
 
 		targets = Gtk.TargetList.new([])
-		targets.add_uri_targets(0)
+		targets.add_image_targets(0, True)
 		self.drag_source_set_target_list(targets)
 
 	def do_drag_data_get(self, widget, context, selection_data, info, time):
 		selected_path = self.get_selected_items()[0]
-		selection_data.set_uris([str(self.getWidgetPosition(selected_path)), self.get_name()])
-
+		selected_iter = self.get_model().get_iter(selected_path)
+		selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
+		TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
+				'position':self.getWidgetPosition(selected_path), 'file':self.get_name()}
 
 	def getWidgetPosition(self, path):
 		return self.get_columns() * self.get_item_row(path) +\
