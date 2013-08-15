@@ -1,5 +1,6 @@
 from gi.repository import Gtk, Gdk, GObject
 import sfml as sf
+from TileBox import TileBox
 from copy import copy
 
 class SFMLArea(Gtk.DrawingArea):
@@ -10,14 +11,12 @@ class SFMLArea(Gtk.DrawingArea):
 		self.render = sf.HandledWindow()
 		self.size = numberCases * sizeCase
 		self.sizeCase = sizeCase
-		self.set_size_request(0, 0)
-		self.render.view.size = sf.Vector2(800, 600)
 
 		self.connect("size-allocate", self.resize)
 		self.connect("drag-data-received", self.do_drag_data_received)
 		self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 		targets = Gtk.TargetList.new([])
-		targets.add_uri_targets(0)
+		targets.add_image_targets(0, True)
 
 		self.drag_dest_set_target_list(targets)
 		self.timemoutUpdate = GObject.timeout_add(20, self.draw)
@@ -44,12 +43,10 @@ class SFMLArea(Gtk.DrawingArea):
 		self.get_toplevel().show_all()
 
 	def updateSlideValues(self):
-		self.vslide.set_adjustment(Gtk.Adjustment(0, 0, \
-				self.size.y - self.render.view.size.y, 1, 10, 10))
-		self.hslide.set_adjustment(Gtk.Adjustment(0, 0, \
-				self.size.x - self.render.view.size.x, 1, 10, 10))
-		#self.vslide.set_value(self.render.view.center.y - self.render.view.size.y/2)
-		#self.hslide.set_value(self.render.view.center.x - self.render.view.size.x/2)
+		self.vslide.set_adjustment(Gtk.Adjustment(min(self.size.y-self.render.view.size.y,\
+				self.vslide.get_value()), 0, self.size.y - self.render.view.size.y, 1, 10, 0))
+		self.hslide.set_adjustment(Gtk.Adjustment(min(self.size.x-self.render.view.size.x,\
+				self.hslide.get_value()), 0, self.size.x - self.render.view.size.x, 1, 10, 0))
 
 	def moveView(self, scroll, orientation):
 		vector = sf.Vector2()
@@ -74,14 +71,16 @@ class SFMLArea(Gtk.DrawingArea):
 
 	def resize(self, widget, allocation):
 		allocation.width = min(allocation.width, self.size.x)
-		allocation.height = min(allocation.width, self.size.y)
+		allocation.height = min(allocation.height, self.size.y)
 		if not 0 in self.render.size:
 			self.render.view.size *= (sf.Vector2(allocation.width, allocation.height) / \
 					self.render.size)
-		self.render.view.move(self.hslide.get_value() - (self.render.view.center.x - self.render.view.size.x/2), \
+			self.render.view.move(self.hslide.get_value() -\
+				(self.render.view.center.x - self.render.view.size.x/2), \
 				self.vslide.get_value() - (self.render.view.center.y - self.render.view.size.y/2))
-		self.render.size = sf.Vector2(allocation.width,\
-				allocation.height)
+		else:
+			self.render.view.size = sf.Vector2(allocation.width, allocation.height)
+		self.render.size = sf.Vector2(allocation.width,	allocation.height)
 		self.updateSlideValues()
 		Gtk.DrawingArea.do_size_allocate(self, allocation)
 
@@ -110,11 +109,8 @@ class SFMLArea(Gtk.DrawingArea):
 		position = self.render.view.center - self.render.view.size / 2
 		size = self.render.view.size
 
-		posX = int(position.x/self.sizeCase.x-1)*\
-				self.sizeCase.x+self.sizeCase.x-position.x%self.sizeCase.x
-		posY = int(position.y/self.sizeCase.y-1)*\
-				self.sizeCase.y+self.sizeCase.y-position.y%self.sizeCase.y
-
+		posX = self.sizeCase.x * int(position.x/self.sizeCase.x+1)
+		posY = self.sizeCase.y * int(position.y/self.sizeCase.y+1)
 
 		lineX = sf.VertexArray(sf.PrimitiveType.LINES, 2)
 		lineY = sf.VertexArray(sf.PrimitiveType.LINES, 2)
@@ -139,8 +135,8 @@ class SFMLArea(Gtk.DrawingArea):
 			lineY[1].position += sf.Vector2(0, self.sizeCase.y)
 
 	def do_drag_data_received(self, widget, context, x, y, selection_data, info, time=None):
-		if info==0:
-			listStr = selection_data.get_data().split()
+		dndDatas = TileBox.dndDatas
+		print(dndDatas)
 
 	def manageTile(self, action):
 		pass
