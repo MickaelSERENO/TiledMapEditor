@@ -12,7 +12,7 @@ class SFMLArea(Gtk.DrawingArea):
 		self.size = numberCases * sizeCase
 		self.sizeCase = sizeCase
 
-		self.connect("size-allocate", self.resize)
+		#self.connect("size-allocate", self.resize)
 		self.connect("drag-data-received", self.do_drag_data_received)
 		self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 		targets = Gtk.TargetList.new([])
@@ -69,18 +69,19 @@ class SFMLArea(Gtk.DrawingArea):
 		self.popupEmpty = uiManager.get_widget("/SFMLEmptyCase")
 		eventBox.connect("button-press-event", self.buttonPressEvent)
 
-	def resize(self, widget, allocation):
+	def do_size_allocate(self, allocation):
 		allocation.width = min(allocation.width, self.size.x)
 		allocation.height = min(allocation.height, self.size.y)
 		if not 0 in self.render.size:
-			self.render.view.size *= (sf.Vector2(allocation.width, allocation.height) / \
-					self.render.size)
+			self.render.view.size *= sf.Vector2(allocation.width, allocation.height) / \
+					sf.Vector2(self.get_allocated_width(), self.get_allocated_height())
 			self.render.view.move(self.hslide.get_value() -\
 				(self.render.view.center.x - self.render.view.size.x/2), \
 				self.vslide.get_value() - (self.render.view.center.y - self.render.view.size.y/2))
+			self.checkViewSize()
 		else:
 			self.render.view.size = sf.Vector2(allocation.width, allocation.height)
-		self.render.size = sf.Vector2(allocation.width,	allocation.height)
+		self.render.size = sf.Vector2(allocation.width, allocation.height)
 		self.updateSlideValues()
 		Gtk.DrawingArea.do_size_allocate(self, allocation)
 
@@ -91,13 +92,31 @@ class SFMLArea(Gtk.DrawingArea):
 		else:
 			factorZoom = 1.1
 		self.render.view.zoom(factorZoom)
+		self.checkViewSize()
+
+		if self.render.view.center.x - self.render.view.size.x/2 < 0:
+			self.render.view.center = sf.Vector2(self.render.view.size.x/2,\
+					self.render.view.center.y)
+		elif self.render.view.center.x + self.render.view.size.x/2 > self.size.x:
+			self.render.view.center = sf.Vector2(self.size.x - self.render.view.size.x/2,\
+					self.render.view.center.y)
+		if self.render.view.center.y - self.render.view.size.y/2 < 0:
+			self.render.view.center = sf.Vector2(self.render.view.center.x, \
+					self.render.view.size.y/2)
+		elif self.render.view.center.y + self.render.view.size.y/2 > self.size.y:
+			self.render.view.center.y = sf.Vector2(self.render.view.center.x, \
+					self.size.y - self.render.view.size.y/2)
 		self.updateSlideValues()
+
+	def checkViewSize(self):
+		if self.render.view.size.x > self.size.x or self.render.view.size.y > self.size.y:
+			self.render.view.zoom(min(self.size.x / self.render.view.size.x,\
+					self.size.y / self.render.view.size.y))
+			self.updateSlideValues()
+
 
 	def draw(self):
 		self.render.empty_event_loop()
-		if self.render.view.size.x > self.size.x or self.render.view.size.y > self.size.y:
-			self.render.view.size = copy(self.size)
-			self.updateSlideValues()
 		self.render.clear()
 		self.drawQuad()
 		for trace in self.listTrace:
@@ -109,27 +128,27 @@ class SFMLArea(Gtk.DrawingArea):
 		position = self.render.view.center - self.render.view.size / 2
 		size = self.render.view.size
 
-		posX = self.sizeCase.x * int(position.x/self.sizeCase.x+1)
-		posY = self.sizeCase.y * int(position.y/self.sizeCase.y+1)
+		posX = max(self.sizeCase.x * int(position.x/self.sizeCase.x), 0)
+		posY = max(self.sizeCase.y * int(position.y/self.sizeCase.y), 0)
 
 		lineX = sf.VertexArray(sf.PrimitiveType.LINES, 2)
 		lineY = sf.VertexArray(sf.PrimitiveType.LINES, 2)
 		lineX[0].color = sf.Color.WHITE
 		lineX[1].color = sf.Color.WHITE
-		lineX[0].position = sf.Vector2(posX, position.y)
-		lineX[1].position = sf.Vector2(posX, position.y+size.y)
+		lineX[0].position = sf.Vector2(posX, max(position.y, 0))
+		lineX[1].position = sf.Vector2(posX, min(position.y+size.y, self.size.y))
 
-		while lineX[0].position.x < position.x + size.x:
+		while lineX[0].position.x < position.x + size.x and not lineX[0].position.x > self.size.x:
 			self.render.draw(lineX)
 			lineX[0].position += sf.Vector2(self.sizeCase.x, 0)
 			lineX[1].position += sf.Vector2(self.sizeCase.x, 0)
 
 		lineY[0].color = sf.Color.WHITE
 		lineY[1].color = sf.Color.WHITE
-		lineY[0].position = sf.Vector2(position.x, posY)
-		lineY[1].position = sf.Vector2(position.x+size.x, posY)
+		lineY[0].position = sf.Vector2(max(position.x, 0), posY)
+		lineY[1].position = sf.Vector2(min(position.x+size.x, self.size.x), posY)
 
-		while lineY[0].position.y < position.y + size.y:
+		while lineY[0].position.y < position.y + size.y and not lineY[0].position.y > self.size.y:
 			self.render.draw(lineY)
 			lineY[0].position += sf.Vector2(0, self.sizeCase.y)
 			lineY[1].position += sf.Vector2(0, self.sizeCase.y)
