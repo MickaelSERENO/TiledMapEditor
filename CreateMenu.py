@@ -1,4 +1,4 @@
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 import sfml as sf
 
 class CreateMenu:
@@ -8,6 +8,8 @@ class CreateMenu:
 	def newFile(self, fileManager, sfmlArea):
 		window = Gtk.Window(title="New File")
 		window.set_property("modal",True)
+		accelGroup = Gtk.AccelGroup()
+		window.add_accel_group(accelGroup)
 
 		vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
 
@@ -60,13 +62,21 @@ class CreateMenu:
 
 		vgrid.add(grid)
 		hbox = Gtk.Box()
+
 		buttonOK = Gtk.Button(label="OK")
-		buttonCancel = Gtk.Button(label="Cancel")
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+				Gtk.AccelFlags.VISIBLE)
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+				Gtk.AccelFlags.VISIBLE)
 		buttonOK.connect("clicked", self.acceptNewFile, \
 				{'hTileSize':spinTileLeft, 'vTileSize':spinTileRight, \
 				'hNumberCases':spinCasesLeft, 'vNumberCases':spinCasesRight, \
 				'nameEntered':nameEntered, 'imageEntered':imageEntered, \
 				'sfmlArea':sfmlArea, 'window':window})
+
+		buttonCancel = Gtk.Button(label="Cancel")
+		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+				Gtk.AccelFlags.MASK)
 		buttonCancel.connect("clicked", self.quitWindow, window)
 
 		hbox.pack_start(buttonCancel, False, False, 0)
@@ -94,6 +104,9 @@ class CreateMenu:
 		window.show_all()
 
 	def createNewTileSet(self, window, fileManager, tileBox):
+		accelGroup = Gtk.AccelGroup()
+		window.add_accel_group(accelGroup)
+
 		grid = Gtk.Grid()
 		vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
 		vgrid.add(grid)
@@ -136,13 +149,19 @@ class CreateMenu:
 		grid.attach_next_to(spinSpaceRight, xBisLabel, Gtk.PositionType.RIGHT, 1, 1)
 		hbox = Gtk.Box()
 		buttonOK = Gtk.Button(label="OK")
-		buttonCancel = Gtk.Button(label="Cancel")
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+				Gtk.AccelFlags.VISIBLE)
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+				Gtk.AccelFlags.VISIBLE)
 		buttonOK.connect("clicked", self.newTileSet, \
 				{'hTileSize':spinTileLeft, 'vTileSize':spinTileRight, \
 				'hTileSpace':spinSpaceLeft, 'vTileSpace':spinSpaceRight, \
 				'imageEntered':imageEntered, 'fileManager':fileManager, \
 				'tileBox':tileBox, 'window':window})
+		buttonCancel = Gtk.Button(label="Cancel")
 		buttonCancel.connect("clicked", self.quitWindow, window)
+		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+				Gtk.AccelFlags.MASK)
 
 		hbox.pack_start(buttonCancel, False, False, 0)
 		hbox.pack_start(buttonOK, False, False, 0)
@@ -159,6 +178,8 @@ class CreateMenu:
 		widgets['window'].destroy()
 
 	def createNewAnnimation(self, window, fileManager, tileBox):
+		accelGroup = Gtk.AccelGroup()
+		window.add_accel_group(accelGroup)
 		grid = Gtk.Grid()
 		vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
 		vgrid.add(grid)
@@ -206,9 +227,16 @@ class CreateMenu:
 
 		box = Gtk.Box()
 		buttonOK = Gtk.Button(label="OK")
-		buttonCancel = Gtk.Button(label="Cancel")
 		buttonOK.connect("clicked", self.newTileSet)
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+				Gtk.AccelFlags.VISIBLE)
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+				Gtk.AccelFlags.VISIBLE)
+
+		buttonCancel = Gtk.Button(label="Cancel")
 		buttonCancel.connect("clicked", self.quitWindow, window)
+		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+				Gtk.AccelFlags.MASK)
 		box.pack_start(buttonCancel, False, False, 0)
 		box.pack_start(buttonOK, False, False, 0)
 		box.set_halign(Gtk.Align.END)
