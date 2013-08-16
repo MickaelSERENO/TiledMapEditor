@@ -8,6 +8,7 @@ from SFMLArea import SFMLArea
 from FileManager import FileManager
 from CreateMenu import CreateMenu
 from TileBox import TileBox
+from TraceManager import TraceManager
 import sfml as sf
 
 class TileWindow(Gtk.Window):
@@ -35,8 +36,13 @@ class TileWindow(Gtk.Window):
 		vbox.pack_start(uiManager.get_widget("/ToolBar"), False, False, 0)
 		self.sfmlArea.makePopup(uiManager, self.eventSFMLBox)
 
+		self.traceManager = TraceManager()
+		panedTraceManager = Gtk.Paned()
+		panedTraceManager.add1(self.tileBox)
+		panedTraceManager.add2(self.traceManager)
+
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-		hbox.pack_start(self.tileBox, True, True, 0)
+		hbox.pack_start(panedTraceManager, True, True, 0)
 		vbox.pack_start(hbox, True, True, 0)
 
 		self.show_all()
@@ -61,7 +67,6 @@ class TileWindow(Gtk.Window):
 		hBox.pack_start(vSlide, False, False, 0)
 		vBox.pack_start(hBox, True, True, 0)
 		vBox.pack_start(hSlide, False, False, 0)
-
 
 		self.tileBox.add2(vBox)
 
