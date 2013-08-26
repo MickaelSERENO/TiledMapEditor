@@ -104,7 +104,7 @@ class SFMLArea(Gtk.DrawingArea):
 			self.render.view.center = sf.Vector2(self.render.view.center.x, \
 					self.render.view.size.y/2)
 		elif self.render.view.center.y + self.render.view.size.y/2 > self.size.y:
-			self.render.view.center.y = sf.Vector2(self.render.view.center.x, \
+			self.render.view.center = sf.Vector2(self.render.view.center.x, \
 					self.size.y - self.render.view.size.y/2)
 		self.updateSlideValues()
 
