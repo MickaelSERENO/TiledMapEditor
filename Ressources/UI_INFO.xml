@@ -9,7 +9,7 @@
 		</menu>
 
 		<menu action="EditionMenu">
-			<menuitem action="NewCalc"/>
+			<menuitem action="NewTrace"/>
 			<menuitem action="NewImage"/>
 		</menu>
 
@@ -28,7 +28,7 @@
 	</toolbar>
 
 	<popup name="SFMLEmptyCase">
-		<menuitem action="NewCalc"/>
+		<menuitem action="NewTrace"/>
 		<menuitem action="NewImage"/>
 	</popup>
 

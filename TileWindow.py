@@ -93,8 +93,8 @@ class TileWindow(Gtk.Window):
 		editionMenuAction = Gtk.Action("EditionMenu", "_Edition", None, None)
 		actionGroup.add_action(editionMenuAction)
 
-		newCalcAction = Gtk.Action("NewCalc", "New _Calc", None, None)
-		actionGroup.add_action_with_accel(newCalcAction, "<Ctrl><Shift>c")
+		newTraceAction = Gtk.Action("NewTrace", "New _Trace", None, None)
+		actionGroup.add_action_with_accel(newTraceAction, "<Ctrl><Shift>c")
 
 		newImageAction = Gtk.Action("NewImage", "New _Image", None, None)
 		actionGroup.add_action_with_accel(newImageAction, "<Ctrl><Shift>i")
