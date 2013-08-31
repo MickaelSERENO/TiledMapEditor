@@ -171,6 +171,31 @@ class CreateMenu:
 
 		return vgrid
 
+	def newTrace(self, traceManager):
+		window = Gtk.Window()
+		window.set_property("modal", True)
+		notebook = Gtk.Notebook()
+		notebook.append_page(self.createNewStaticTrace(window, traceManager),\
+				Gtk.Label("Static"))
+		notebook.append_page(self.createNewDynamicTrace(window, traceManager),\
+				Gtk.Label("Dynamic"))
+
+		window.connect("destroy", self.quitWindow, window, "cancel")
+		window.add(notebook)
+		window.show_all()
+
+	def createNewDynamicTrace(self, window, traceManager):
+		grid = Gtk.Grid()
+		nameLabel = Gtk.Label("Name")
+		nameEntered = Gtk.Entry(text="Trace #"+traceManager.getNumberOfTraces())
+		return grid
+
+	def createNewStaticTrace(self, traceManager):
+		grid = Gtk.Grid()
+		nameLabel = Gtk.Label("Name")
+		nameEntered = Gtk.Entry(text="Trace #"+traceManager.getNumberOfTraces())
+		return grid
+
 	def newTileSet(self, button, widgets):
 		widgets['tileBox'].cutTileSet(widgets['imageEntered'].get_text(), \
 				sf.Vector2(widgets['hTileSize'].get_value(), widgets['vTileSize'].get_value()), \
