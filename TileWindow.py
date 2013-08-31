@@ -39,7 +39,7 @@ class TileWindow(Gtk.Window):
 		self.traceManager = TraceManager()
 		panedTraceManager = Gtk.Paned()
 		panedTraceManager.add1(self.tileBox)
-		panedTraceManager.add2(self.traceManager)
+		panedTraceManager.pack2(self.traceManager, False, True)
 
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		hbox.pack_start(panedTraceManager, True, True, 0)

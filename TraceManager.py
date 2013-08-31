@@ -7,6 +7,7 @@ class TraceManager(Gtk.Box):
 		self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		self.pack_start(self.vbox, True, True, 0)
 		self.buildMenu()
+		self.set_size_request(100, 300)
 
 	def buildMenu(self):
 		box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)

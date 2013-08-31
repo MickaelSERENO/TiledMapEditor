@@ -24,8 +24,9 @@ class TileBox(Gtk.Paned):
 
 		self.box.pack_start(annimationExpander, True, True, 0)
 
-		self.set_size_request(200, 300)
+		self.set_size_request(500, 300)
 		scrolledWindow.add(self.box)
+		scrolledWindow.set_size_request(100, 300)
 		self.pack1(scrolledWindow)
 
 	def cutTileSet(self, tileSetFile, size=sf.Vector2(32, 32), spacing=sf.Vector2(0, 0)):
