@@ -171,7 +171,7 @@ class CreateMenu:
 
 		return vgrid
 
-	def newTrace(self, traceManager):
+	def newTrace(self, widget, traceManager):
 		window = Gtk.Window()
 		window.set_property("modal", True)
 		notebook = Gtk.Notebook()
@@ -187,14 +187,59 @@ class CreateMenu:
 	def createNewDynamicTrace(self, window, traceManager):
 		grid = Gtk.Grid()
 		nameLabel = Gtk.Label("Name")
-		nameEntered = Gtk.Entry(text="Trace #"+traceManager.getNumberOfTraces())
+		nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
 		return grid
 
-	def createNewStaticTrace(self, traceManager):
+	def createNewStaticTrace(self, window, traceManager):
+		accelGroup = Gtk.AccelGroup()
+		window.add_accel_group(accelGroup)
+
 		grid = Gtk.Grid()
+		vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
+		vgrid.add(grid)
 		nameLabel = Gtk.Label("Name")
-		nameEntered = Gtk.Entry(text="Trace #"+traceManager.getNumberOfTraces())
-		return grid
+		nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
+
+		xComboBox = Gtk.ComboBoxText()
+		for i in range(1, self.parent.sfmlArea.numberCases.x+1):
+			xComboBox.append_text(str(i*self.parent.sfmlArea.sizeCase.x))
+
+		yComboBox = Gtk.ComboBoxText()
+		for i in range(1, self.parent.sfmlArea.numberCases.y+1):
+			yComboBox.append_text(str(i*self.parent.sfmlArea.sizeCase.y))
+
+		sizeLabel = Gtk.Label("Size")
+		xLabel = Gtk.Label("x")
+
+		grid.attach(nameLabel, 0, 0, 1, 1)
+		grid.attach_next_to(nameEntered, nameLabel, Gtk.PositionType.RIGHT, 3, 1)
+		grid.attach_next_to(sizeLabel, nameLabel, Gtk.PositionType.BOTTOM, 1, 1)
+		grid.attach_next_to(xComboBox, sizeLabel, Gtk.PositionType.RIGHT, 1, 1)
+		grid.attach_next_to(xLabel, xComboBox, Gtk.PositionType.RIGHT, 1, 1)
+		grid.attach_next_to(yComboBox, xLabel, Gtk.PositionType.RIGHT, 1, 1)
+
+		hbox = Gtk.Box()
+		buttonOK = Gtk.Button(label="OK")
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+				Gtk.AccelFlags.VISIBLE)
+		buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+				Gtk.AccelFlags.VISIBLE)
+		buttonOK.connect("clicked", self.newStaticTrace, \
+				{'xComboBox':xComboBox, 'yComboBox':yComboBox,\
+				'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window})
+		buttonCancel = Gtk.Button(label="Cancel")
+		buttonCancel.connect("clicked", self.quitWindow, window)
+		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+				Gtk.AccelFlags.MASK)
+
+		hbox.pack_start(buttonCancel, False, False, 0)
+		hbox.pack_start(buttonOK, False, False, 0)
+		vgrid.add(hbox)
+		
+		hbox.set_halign(Gtk.Align.END)
+		hbox.set_valign(Gtk.Align.END)
+
+		return vgrid
 
 	def newTileSet(self, button, widgets):
 		widgets['tileBox'].cutTileSet(widgets['imageEntered'].get_text(), \
@@ -270,8 +315,13 @@ class CreateMenu:
 		vgrid.add(hbox)
 		return vgrid
 
-	def newAnnimation(self, button, **kwargs):
+	def newAnnimation(self, button, widgets):
 		pass
+
+	def newStaticTrace(self, button, widgets):
+		pass
+
+	def newDynamicTrace(self, button, widgets)
 
 	def quitWindow(self, *args, **kwargs):
 		args[1].destroy()
