@@ -12,7 +12,6 @@ class SFMLArea(Gtk.DrawingArea):
 		self.size = numberCases * sizeCase
 		self.sizeCase = sizeCase
 
-		#self.connect("size-allocate", self.resize)
 		self.connect("drag-data-received", self.do_drag_data_received)
 		self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 		targets = Gtk.TargetList.new([])
@@ -43,10 +42,10 @@ class SFMLArea(Gtk.DrawingArea):
 		self.get_toplevel().show_all()
 
 	def updateSlideValues(self):
-		self.vslide.set_adjustment(Gtk.Adjustment(min(self.size.y-self.render.view.size.y,\
-				self.vslide.get_value()), 0, self.size.y - self.render.view.size.y, 1, 10, 0))
-		self.hslide.set_adjustment(Gtk.Adjustment(min(self.size.x-self.render.view.size.x,\
-				self.hslide.get_value()), 0, self.size.x - self.render.view.size.x, 1, 10, 0))
+		self.vslide.set_adjustment(Gtk.Adjustment(self.render.view.center.y - self.render.view.size.y/2,\
+				0, self.size.y - self.render.view.size.y, 1, 10, 0))
+		self.hslide.set_adjustment(Gtk.Adjustment(self.render.view.center.x - self.render.view.size.x/2,\
+				0, self.size.x - self.render.view.size.x, 1, 10, 0))
 
 	def moveView(self, scroll, orientation):
 		vector = sf.Vector2()
@@ -80,7 +79,9 @@ class SFMLArea(Gtk.DrawingArea):
 				self.vslide.get_value() - (self.render.view.center.y - self.render.view.size.y/2))
 			self.checkViewSize()
 		else:
-			self.render.view.size = sf.Vector2(allocation.width, allocation.height)
+			alloc = sf.Vector2(allocation.width, allocation.height)
+			self.render.view.size = alloc
+			self.render.view.center = alloc/2
 		self.render.size = sf.Vector2(allocation.width, allocation.height)
 		self.updateSlideValues()
 		Gtk.DrawingArea.do_size_allocate(self, allocation)
@@ -121,6 +122,7 @@ class SFMLArea(Gtk.DrawingArea):
 		self.drawQuad()
 		for trace in self.listTrace:
 			trace.update()
+		self.render.draw(circle)
 		self.render.display()
 		return True
 		
