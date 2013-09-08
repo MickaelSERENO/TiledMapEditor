@@ -19,6 +19,10 @@ class TileWindow(Gtk.Window):
 		self.tileBox = TileBox()
 		self.buildSFMLArea()
 
+		self.traceManager = TraceManager()
+		panedTraceManager = Gtk.Paned()
+		panedTraceManager.add1(self.tileBox)
+		panedTraceManager.pack2(self.traceManager, False, True)
 		self.set_default_size(800, 600)
 
 		actionGroup = Gtk.ActionGroup("Actions")
@@ -35,11 +39,6 @@ class TileWindow(Gtk.Window):
 		vbox.pack_start(uiManager.get_widget("/MenuBar"), False, False, 0)
 		vbox.pack_start(uiManager.get_widget("/ToolBar"), False, False, 0)
 		self.sfmlArea.makePopup(uiManager, self.eventSFMLBox)
-
-		self.traceManager = TraceManager()
-		panedTraceManager = Gtk.Paned()
-		panedTraceManager.add1(self.tileBox)
-		panedTraceManager.pack2(self.traceManager, False, True)
 
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		hbox.pack_start(panedTraceManager, True, True, 0)
@@ -95,6 +94,7 @@ class TileWindow(Gtk.Window):
 
 		newTraceAction = Gtk.Action("NewTrace", "New _Trace", None, None)
 		actionGroup.add_action_with_accel(newTraceAction, "<Ctrl><Shift>c")
+		newTraceAction.connect("activate", self.newContents.newTrace, self.traceManager)
 
 		newImageAction = Gtk.Action("NewImage", "New _Image", None, None)
 		actionGroup.add_action_with_accel(newImageAction, "<Ctrl><Shift>i")
@@ -129,6 +129,6 @@ class TileWindow(Gtk.Window):
 
 		elif action=="saveAs":
 			print(self.fileManager.saveFile())
-
+	
 	def newFile(self, widget):
 		self.newContents.newFile(self.fileManager, self.sfmlArea)
