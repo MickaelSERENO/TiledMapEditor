@@ -121,8 +121,8 @@ class SFMLArea(Gtk.DrawingArea):
 		self.render.clear()
 		self.drawQuad()
 		for trace in self.listTrace:
-			trace.update()
-		self.render.draw(circle)
+			if trace.canUpdate:
+				trace.update()
 		self.render.display()
 		return True
 		
@@ -155,9 +155,10 @@ class SFMLArea(Gtk.DrawingArea):
 			lineY[0].position += sf.Vector2(0, self.sizeCase.y)
 			lineY[1].position += sf.Vector2(0, self.sizeCase.y)
 
-	def do_drag_data_received(self, widget, context, x, y, selection_data, info, time=None):
-		dndDatas = TileBox.dndDatas
-		print(dndDatas)
+	def do_drag_data_received(self, widget, context, x, y, selection_data, info, time):
+		for trace in listTrace.reverse():
+			if trace.canUpdate:
+				trace.addTile(widget, context, x, y, selection_data, info, time)
 
 	def manageTile(self, action):
 		pass
@@ -169,12 +170,24 @@ class SFMLArea(Gtk.DrawingArea):
 class Trace:
 	def __init__(self, sfmlArea):
 		self.sfmlArea = sfmlArea
+		self.canUpdate = True
 		self.listTile = list(list())
 
 	def update(self):
 		for tile in [tile for content in self.listTile for tile in content]:
 			tile.update()
 
+	def addTile(self, widget, context, x, y, selection_data, info, time):
+		dndDatas = TileBox.dndDatas
+		position = self.sfmlArea.sizeCase * sf.Vector2(\
+			int(x/self.sfmlArea.sizeCase.x), int(y/self.sfmlArea.sizeCase.y))
+
 class Tile:
-	def __init__(self):
-		pass
+	def __init__(self, position, subRect, texture, sfmlArea):
+		self.sfmlArea = sfmlArea
+		self.sprite = sf.Sprite(texture)
+		self.sprite.texture_rect = subRect
+		self.sprite.position = position
+
+	def update(self):
+		sfmlArea.render.draw(self.sprite)

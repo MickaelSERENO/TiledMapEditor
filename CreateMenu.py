@@ -316,12 +316,14 @@ class CreateMenu:
 		return vgrid
 
 	def newAnnimation(self, button, widgets):
-		pass
+		print(widgets['xComboBox'].get_active())
+		#widgets['traceManager'].addTrace(sf.Vector2(widgets['xComboBox'].get_va
 
 	def newStaticTrace(self, button, widgets):
 		pass
 
-	def newDynamicTrace(self, button, widgets)
+	def newDynamicTrace(self, button, widgets):
+		pass
 
 	def quitWindow(self, *args, **kwargs):
 		args[1].destroy()
