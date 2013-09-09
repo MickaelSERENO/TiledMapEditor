@@ -32,3 +32,5 @@ class TraceManager(Gtk.Box):
 		self.vbox.pack_start(box, True, True, 0)
 		seeTrace = Gtk.CheckButton(label="Show trace")
 		box.pack_start(seeTrace, True, False, 0)
+
+		self.vbox.pack_start(box)

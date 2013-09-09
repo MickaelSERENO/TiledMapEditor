@@ -3,7 +3,7 @@ from os import path
 import sfml as sf
 
 class TileBox(Gtk.Paned):
-	fileList = list()
+	textureList = dict()
 	dndDatas = None
 	def __init__(self):
 		scrolledWindow = Gtk.ScrolledWindow()
@@ -33,15 +33,15 @@ class TileBox(Gtk.Paned):
 		if tileSetFile and path.isfile(tileSetFile):
 			tileSetFile = path.relpath(path.abspath(tileSetFile), path.abspath(path.dirname(__file__)))
 
-			if tileSetFile in TileBox.fileList:
+			if tileSetFile in TileBox.textureList:
 				return
 			else:
-				TileBox.fileList.append(tileSetFile)
+				TileBox.textureList['tileSetFile'] = sf.Texture.from_file(tileSetFile)
 
 			expander = Gtk.Expander()
 			expander.set_label(tileSetFile)
 
-			treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf)
+			treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf, int, int)
 
 			image = Gtk.Image()
 			image.set_from_file(tileSetFile)
@@ -52,9 +52,10 @@ class TileBox(Gtk.Paned):
 			while posY < originPixbuf.get_height():
 				listPixbuf = []
 				pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, size.x, size.y)
+
 				originPixbuf.copy_area(posX, posY, min(size.x, originPixbuf.get_width() - posX), \
 						min(size.y, originPixbuf.get_height() - posY),	pixbuf, 0, 0)
-				listPixbuf.append(pixbuf)
+				listPixbuf.append(pixbuf, posX, posY)
 				posX += size.x + spacing.x
 				if posX >= originPixbuf.get_width():
 					posX = 0
@@ -91,3 +92,8 @@ class DragIconView(Gtk.IconView):
 	def getWidgetPosition(self, path):
 		return self.get_columns() * self.get_item_row(path) +\
 				self.get_item_column(path)
+
+	def getXYWidgetPosition(self, path):
+		pass
+#		vector = sf.Vector2()
+#		vector.x = 
