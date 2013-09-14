@@ -11,6 +11,7 @@ class SFMLArea(Gtk.DrawingArea):
 		self.render = sf.HandledWindow()
 		self.size = numberCases * sizeCase
 		self.sizeCase = sizeCase
+		self.numberCases = numberCases
 
 		self.connect("drag-data-received", self.do_drag_data_received)
 		self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)

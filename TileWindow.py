@@ -73,7 +73,7 @@ class TileWindow(Gtk.Window):
 		fileMenuAction = Gtk.Action("FileMenu", "_File", None, None)
 		actionGroup.add_action(fileMenuAction)
 
-		newFileAction = Gtk.Action("NewFile", None, None, Gtk.STOCK_NEW)
+		NewFileAction = Gtk.Action("NewFile", None, None, Gtk.STOCK_NEW)
 		actionGroup.add_action_with_accel(newFileAction, None)
 		newFileAction.connect("activate", self.newFile)
 
@@ -94,7 +94,7 @@ class TileWindow(Gtk.Window):
 
 		newTraceAction = Gtk.Action("NewTrace", "New _Trace", None, None)
 		actionGroup.add_action_with_accel(newTraceAction, "<Ctrl><Shift>c")
-		newTraceAction.connect("activate", self.newContents.newTrace, self.traceManager)
+		newTraceAction.connect("activate", self.newContents.newTrace, self.sfmlArea, self.traceManager)
 
 		newImageAction = Gtk.Action("NewImage", "New _Image", None, None)
 		actionGroup.add_action_with_accel(newImageAction, "<Ctrl><Shift>i")

@@ -171,11 +171,11 @@ class CreateMenu:
 
 		return vgrid
 
-	def newTrace(self, widget, traceManager):
+	def newTrace(self, widget, sfmlArea, traceManager):
 		window = Gtk.Window()
 		window.set_property("modal", True)
 		notebook = Gtk.Notebook()
-		notebook.append_page(self.createNewStaticTrace(window, traceManager),\
+		notebook.append_page(self.createNewStaticTrace(window, sfmlArea, traceManager),\
 				Gtk.Label("Static"))
 		notebook.append_page(self.createNewDynamicTrace(window, traceManager),\
 				Gtk.Label("Dynamic"))
@@ -190,7 +190,7 @@ class CreateMenu:
 		nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
 		return grid
 
-	def createNewStaticTrace(self, window, traceManager):
+	def createNewStaticTrace(self, window, sfmlArea, traceManager):
 		accelGroup = Gtk.AccelGroup()
 		window.add_accel_group(accelGroup)
 
@@ -226,7 +226,7 @@ class CreateMenu:
 				Gtk.AccelFlags.VISIBLE)
 		buttonOK.connect("clicked", self.newStaticTrace, \
 				{'xComboBox':xComboBox, 'yComboBox':yComboBox,\
-				'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window})
+				'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window, 'sfmlArea':sfmlArea})
 		buttonCancel = Gtk.Button(label="Cancel")
 		buttonCancel.connect("clicked", self.quitWindow, window)
 		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
@@ -242,10 +242,14 @@ class CreateMenu:
 		return vgrid
 
 	def newTileSet(self, button, widgets):
+		spacing = sf.Vector2(0, 0)
+		if 'hTileSize' and 'vTileSpace' in widgets:
+			spacing = sf.Vector2(widgets['hTileSpace'].get_value(), widgets['vTileSpace'].get_value())
 		widgets['tileBox'].cutTileSet(widgets['imageEntered'].get_text(), \
 				sf.Vector2(widgets['hTileSize'].get_value(), widgets['vTileSize'].get_value()), \
-				sf.Vector2(widgets['hTileSpace'].get_value(), widgets['vTileSpace'].get_value()))
-		widgets['window'].destroy()
+				spacing)	
+		if 'window' in widgets:
+			widgets['window'].destroy()
 
 	def createNewAnnimation(self, window, fileManager, tileBox):
 		accelGroup = Gtk.AccelGroup()
@@ -320,7 +324,10 @@ class CreateMenu:
 		#widgets['traceManager'].addTrace(sf.Vector2(widgets['xComboBox'].get_va
 
 	def newStaticTrace(self, button, widgets):
-		pass
+		widgets['traceManager'].addTrace(sf.Vector2(int(widgets['xComboBox'].get_active_text()),\
+				int(widgets['yComboBox'].get_active_text())), widgets['sfmlArea'], widgets['nameEntered'].get_text())
+		if 'window' in widgets:
+			widgets['window'].destroy()
 
 	def newDynamicTrace(self, button, widgets):
 		pass
@@ -343,4 +350,8 @@ class CreateMenu:
 				sf.Vector2(widgets["hTileSize"].get_value(), widgets["vTileSize"].get_value()))
 		widgets["sfmlArea"].get_toplevel().set_title(\
 				widgets['nameEntered'].get_text().replace(".xml", ""))
-		widgets["window"].destroy()
+		window = widgets['window']
+		del widgets['window']
+		if widgets['imageEntered'].get_text() :
+			self.newTileSet(widgets)
+		window.destroy()
