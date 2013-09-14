@@ -1,5 +1,6 @@
 from gi.repository import Gtk, GdkPixbuf, Gdk, GObject
 from os import path
+from copy import copy
 import sfml as sf
 
 class TileBox(Gtk.Paned):
@@ -50,12 +51,11 @@ class TileBox(Gtk.Paned):
 			posY = 0
 
 			while posY < originPixbuf.get_height():
-				listPixbuf = []
 				pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, size.x, size.y)
 
 				originPixbuf.copy_area(posX, posY, min(size.x, originPixbuf.get_width() - posX), \
 						min(size.y, originPixbuf.get_height() - posY),	pixbuf, 0, 0)
-				listPixbuf.append(pixbuf, posX, posY)
+				listPixbuf = [pixbuf, posX, posY]
 				posX += size.x + spacing.x
 				if posX >= originPixbuf.get_width():
 					posX = 0
@@ -94,6 +94,14 @@ class DragIconView(Gtk.IconView):
 				self.get_item_column(path)
 
 	def getXYWidgetPosition(self, path):
-		pass
-#		vector = sf.Vector2()
-#		vector.x = 
+		vector = sf.Vector2()
+		vector.x = self.get_model().get_value(self.get_model().get_iter(path), 1)
+		vector.y = self.get_model().get_value(self.get_model().get_iter(path), 2)
+		return vector
+
+	def getIconSubRect(self, path):
+		vector = self.getXYWidgetPosition(self, path)
+		rect = sf.Rectangle()
+		rect.pos = (vector)*(self.spacing+self.size)
+		rect.size = copy(self.size)
+		return rect
