@@ -2,9 +2,10 @@ from gi.repository import Gtk, Gdk, GObject
 import sfml as sf
 from TileBox import TileBox
 from copy import copy
+import globalVar
 
 class SFMLArea(Gtk.DrawingArea):
-	def __init__(self, hslide, vslide, numberCases, sizeCase):
+	def __init__(self, hslide, vslide, numberCases, sizeCase, traceManager):
 		Gtk.DrawingArea.__init__(self)
 		self.hslide = hslide
 		self.vslide = vslide
@@ -24,7 +25,6 @@ class SFMLArea(Gtk.DrawingArea):
 		self.popupFull = None
 		self.popupEmpty = None
 		self.setSlideProperties()
-
 		self.listTrace = list()
 
 	def setSlideProperties(self):
@@ -168,11 +168,15 @@ class SFMLArea(Gtk.DrawingArea):
 		if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
 			self.popupEmpty.popup(None, None, None, None, event.button, event.time)
 
+	def addTrace(self, tileSize, style):
+		self.listTrace.append(Trace(tileSize, style))
+
 class Trace:
-	def __init__(self, sfmlArea):
-		self.sfmlArea = sfmlArea
+	def __init__(self, tileSize, style):
 		self.canUpdate = True
+		self.style = style
 		self.listTile = list(list())
+		self.tileSize = tileSize
 
 	def update(self):
 		for tile in [tile for content in self.listTile for tile in content]:
@@ -180,15 +184,17 @@ class Trace:
 
 	def addTile(self, widget, context, x, y, selection_data, info, time):
 		dndDatas = TileBox.dndDatas
-		position = self.sfmlArea.sizeCase * sf.Vector2(\
-			int(x/self.sfmlArea.sizeCase.x), int(y/self.sfmlArea.sizeCase.y))
+		if self.style=="Normal":
+			position = self.tileSize * sf.Vector2(\
+				int(x/self.tileSize.x), int(y/self.tileSize.y))
+		else:
+			position = sf.Vector2(x, y)
 
 class Tile:
 	def __init__(self, position, subRect, texture, sfmlArea):
-		self.sfmlArea = sfmlArea
 		self.sprite = sf.Sprite(texture)
 		self.sprite.texture_rect = subRect
 		self.sprite.position = position
 
 	def update(self):
-		sfmlArea.render.draw(self.sprite)
+		globalVar.sfmlArea.render.draw(self.sprite)

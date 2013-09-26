@@ -1,4 +1,5 @@
 import platform
+import globalVar
 from gi.repository import Gtk, GObject, Gdk
 if platform.system() == "Linux":
 	from gi.repository import GdkX11
@@ -17,9 +18,9 @@ class TileWindow(Gtk.Window):
 		self.fileManager = FileManager(self)
 		self.newContents = CreateMenu(self)
 		self.tileBox = TileBox()
+		self.traceManager = TraceManager()
 		self.buildSFMLArea()
 
-		self.traceManager = TraceManager()
 		panedTraceManager = Gtk.Paned()
 		panedTraceManager.add1(self.tileBox)
 		panedTraceManager.pack2(self.traceManager, False, True)
@@ -29,7 +30,7 @@ class TileWindow(Gtk.Window):
 		self.makeFileMenuAction(actionGroup)
 		self.makeEditionMenuAction(actionGroup)
 		self.makeToolMenuAction(actionGroup)
-		self.sfmlArea.makePopupAction(actionGroup)
+		globalVar.sfmlArea.makePopupAction(actionGroup)
 
 		uiManager = self.createUIManager()
 		uiManager.insert_action_group(actionGroup)
@@ -38,7 +39,7 @@ class TileWindow(Gtk.Window):
 		self.add(vbox)
 		vbox.pack_start(uiManager.get_widget("/MenuBar"), False, False, 0)
 		vbox.pack_start(uiManager.get_widget("/ToolBar"), False, False, 0)
-		self.sfmlArea.makePopup(uiManager, self.eventSFMLBox)
+		globalVar.sfmlArea.makePopup(uiManager, self.eventSFMLBox)
 
 		hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		hbox.pack_start(panedTraceManager, True, True, 0)
@@ -46,22 +47,21 @@ class TileWindow(Gtk.Window):
 
 		self.show_all()
 		if platform.system() == "Linux":
-			self.sfmlArea.render.create(self.sfmlArea.get_window().get_xid())
+			globalVar.sfmlArea.render.create(globalVar.sfmlArea.get_window().get_xid())
 		elif paltform.system() == "Windows":
-			self.sfmlArea.render.create(GdkWin32.Win32Window.get_handle(self.sfmlArea.get_window()))
-#		self.sfmlArea.get_parent().get_parent().get_parent().hide()
+			globalVar.sfmlArea.render.create(GdkWin32.Win32Window.get_handle(globalVar.sfmlArea.get_window()))
 
 	def buildSFMLArea(self):
 		vSlide = Gtk.VScrollbar()
 		hSlide = Gtk.HScrollbar()
+		globalVar.sfmlArea = SFMLArea(hSlide, vSlide, \
+				sf.Vector2(110, 110), sf.Vector2(32, 32), self.traceManager)
 
 		vBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		hBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 
-		self.sfmlArea = SFMLArea(hSlide, vSlide, \
-				sf.Vector2(110, 110), sf.Vector2(32, 32))
 		self.eventSFMLBox = Gtk.EventBox()
-		self.eventSFMLBox.add(self.sfmlArea)
+		self.eventSFMLBox.add(globalVar.sfmlArea)
 		hBox.pack_start(self.eventSFMLBox, True, True, 0)
 		hBox.pack_start(vSlide, False, False, 0)
 		vBox.pack_start(hBox, True, True, 0)
@@ -73,7 +73,7 @@ class TileWindow(Gtk.Window):
 		fileMenuAction = Gtk.Action("FileMenu", "_File", None, None)
 		actionGroup.add_action(fileMenuAction)
 
-		NewFileAction = Gtk.Action("NewFile", None, None, Gtk.STOCK_NEW)
+		newFileAction = Gtk.Action("NewFile", None, None, Gtk.STOCK_NEW)
 		actionGroup.add_action_with_accel(newFileAction, None)
 		newFileAction.connect("activate", self.newFile)
 
@@ -94,7 +94,7 @@ class TileWindow(Gtk.Window):
 
 		newTraceAction = Gtk.Action("NewTrace", "New _Trace", None, None)
 		actionGroup.add_action_with_accel(newTraceAction, "<Ctrl><Shift>c")
-		newTraceAction.connect("activate", self.newContents.newTrace, self.sfmlArea, self.traceManager)
+		newTraceAction.connect("activate", self.newContents.newTrace, self.traceManager)
 
 		newImageAction = Gtk.Action("NewImage", "New _Image", None, None)
 		actionGroup.add_action_with_accel(newImageAction, "<Ctrl><Shift>i")
@@ -109,10 +109,10 @@ class TileWindow(Gtk.Window):
 		changeSizeAction = Gtk.Action("ChangeSize", "Change size", None, None)
 		actionGroup.add_action(changeSizeAction)
 		zoomPlus = Gtk.Action("Zoom+", None, None, Gtk.STOCK_ZOOM_IN)
-		zoomPlus.connect("activate", self.sfmlArea.zoom, "in")
+		zoomPlus.connect("activate", globalVar.sfmlArea.zoom, "in")
 		actionGroup.add_action_with_accel(zoomPlus, None)
 		zoomOut = Gtk.Action("Zoom-", None, None, Gtk.STOCK_ZOOM_OUT)
-		zoomOut.connect("activate", self.sfmlArea.zoom, "out")
+		zoomOut.connect("activate", globalVar.sfmlArea.zoom, "out")
 		actionGroup.add_action_with_accel(zoomOut, None)
 		
 	def createUIManager(self):
@@ -131,4 +131,4 @@ class TileWindow(Gtk.Window):
 			print(self.fileManager.saveFile())
 	
 	def newFile(self, widget):
-		self.newContents.newFile(self.fileManager, self.sfmlArea)
+		self.newContents.newFile(self.fileManager)

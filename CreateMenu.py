@@ -1,11 +1,12 @@
 from gi.repository import Gtk, Gdk
+import globalVar
 import sfml as sf
 
 class CreateMenu:
 	def __init__(self, parent):
 		self.parent = parent
 
-	def newFile(self, fileManager, sfmlArea):
+	def newFile(self, fileManager):
 		window = Gtk.Window(title="New File")
 		window.set_property("modal",True)
 		accelGroup = Gtk.AccelGroup()
@@ -72,7 +73,7 @@ class CreateMenu:
 				{'hTileSize':spinTileLeft, 'vTileSize':spinTileRight, \
 				'hNumberCases':spinCasesLeft, 'vNumberCases':spinCasesRight, \
 				'nameEntered':nameEntered, 'imageEntered':imageEntered, \
-				'sfmlArea':sfmlArea, 'window':window})
+				'window':window})
 
 		buttonCancel = Gtk.Button(label="Cancel")
 		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
@@ -171,11 +172,11 @@ class CreateMenu:
 
 		return vgrid
 
-	def newTrace(self, widget, sfmlArea, traceManager):
+	def newTrace(self, widget, traceManager):
 		window = Gtk.Window()
 		window.set_property("modal", True)
 		notebook = Gtk.Notebook()
-		notebook.append_page(self.createNewStaticTrace(window, sfmlArea, traceManager),\
+		notebook.append_page(self.createNewStaticTrace(window, traceManager),\
 				Gtk.Label("Static"))
 		notebook.append_page(self.createNewDynamicTrace(window, traceManager),\
 				Gtk.Label("Dynamic"))
@@ -190,7 +191,7 @@ class CreateMenu:
 		nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
 		return grid
 
-	def createNewStaticTrace(self, window, sfmlArea, traceManager):
+	def createNewStaticTrace(self, window, traceManager):
 		accelGroup = Gtk.AccelGroup()
 		window.add_accel_group(accelGroup)
 
@@ -201,12 +202,12 @@ class CreateMenu:
 		nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
 
 		xComboBox = Gtk.ComboBoxText()
-		for i in range(1, self.parent.sfmlArea.numberCases.x+1):
-			xComboBox.append_text(str(i*self.parent.sfmlArea.sizeCase.x))
+		for i in range(1, globalVar.sfmlArea.numberCases.x+1):
+			xComboBox.append_text(str(i*globalVar.sfmlArea.sizeCase.x))
 
 		yComboBox = Gtk.ComboBoxText()
-		for i in range(1, self.parent.sfmlArea.numberCases.y+1):
-			yComboBox.append_text(str(i*self.parent.sfmlArea.sizeCase.y))
+		for i in range(1, globalVar.sfmlArea.numberCases.y+1):
+			yComboBox.append_text(str(i*globalVar.sfmlArea.sizeCase.y))
 
 		sizeLabel = Gtk.Label("Size")
 		xLabel = Gtk.Label("x")
@@ -226,7 +227,7 @@ class CreateMenu:
 				Gtk.AccelFlags.VISIBLE)
 		buttonOK.connect("clicked", self.newStaticTrace, \
 				{'xComboBox':xComboBox, 'yComboBox':yComboBox,\
-				'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window, 'sfmlArea':sfmlArea})
+				'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window})
 		buttonCancel = Gtk.Button(label="Cancel")
 		buttonCancel.connect("clicked", self.quitWindow, window)
 		buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
@@ -325,7 +326,7 @@ class CreateMenu:
 
 	def newStaticTrace(self, button, widgets):
 		widgets['traceManager'].addTrace(sf.Vector2(int(widgets['xComboBox'].get_active_text()),\
-				int(widgets['yComboBox'].get_active_text())), widgets['sfmlArea'], widgets['nameEntered'].get_text())
+				int(widgets['yComboBox'].get_active_text())), widgets['nameEntered'].get_text())
 		if 'window' in widgets:
 			widgets['window'].destroy()
 
@@ -345,10 +346,10 @@ class CreateMenu:
 		if widgets['nameEntered'].get_text()[-4:] != ".xml":
 			addString = ".xml"
 		open("Files/" + widgets['nameEntered'].get_text() + addString, "w").close()
-		widgets["sfmlArea"].setSFMLSize(sf.Vector2(\
+		globalVar.sfmlArea.setSFMLSize(sf.Vector2(\
 				widgets["hNumberCases"].get_value(), widgets["vNumberCases"].get_value()),\
 				sf.Vector2(widgets["hTileSize"].get_value(), widgets["vTileSize"].get_value()))
-		widgets["sfmlArea"].get_toplevel().set_title(\
+		globalVar.sfmlArea.get_toplevel().set_title(\
 				widgets['nameEntered'].get_text().replace(".xml", ""))
 		window = widgets['window']
 		del widgets['window']
