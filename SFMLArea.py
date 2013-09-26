@@ -5,7 +5,7 @@ from copy import copy
 import globalVar
 
 class SFMLArea(Gtk.DrawingArea):
-	def __init__(self, hslide, vslide, numberCases, sizeCase, traceManager):
+	def __init__(self, hslide, vslide, numberCases, sizeCase):
 		Gtk.DrawingArea.__init__(self)
 		self.hslide = hslide
 		self.vslide = vslide
@@ -177,8 +177,11 @@ class Trace:
 		self.style = style
 		self.listTile = list(list())
 		self.tileSize = tileSize
+		self.show = True
 
 	def update(self):
+		if not self.show:
+			return
 		for tile in [tile for content in self.listTile for tile in content]:
 			tile.update()
 

@@ -55,7 +55,7 @@ class TileWindow(Gtk.Window):
 		vSlide = Gtk.VScrollbar()
 		hSlide = Gtk.HScrollbar()
 		globalVar.sfmlArea = SFMLArea(hSlide, vSlide, \
-				sf.Vector2(110, 110), sf.Vector2(32, 32), self.traceManager)
+				sf.Vector2(110, 110), sf.Vector2(32, 32))
 
 		vBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		hBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)

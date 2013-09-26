@@ -30,13 +30,13 @@ class TraceManager(Gtk.Box):
 
 	def addTrace(self, tileSize, name, style="Normal"):
 		box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-		self.vbox.pack_start(box, True, True, 0)
-		seeTrace = Gtk.CheckButton(label="Show trace")
-		box.pack_start(seeTrace, True, False, 0)
-		box.pack_start(Gtk.Label(name), True, False, 0)
+		seeTrace = Gtk.CheckButton(label="Show trace", active=True)
+		box.pack_start(seeTrace, False, False, 0)
+		box.pack_start(Gtk.Label(name), False, False, 0)
+		self.vbox.pack_start(box, False, False, 0)
 
-		self.vbox.pack_start(box, True, True, 0)
-		globalVar.sfmlArea.addTrace(tileSize, name, style)
+		globalVar.sfmlArea.addTrace(tileSize, style)
+		self.show_all()
 
 	def getNumberOfTraces(self):
-		return 0
+		return len(self.vbox)

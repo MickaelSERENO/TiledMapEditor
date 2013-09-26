@@ -326,7 +326,7 @@ class CreateMenu:
 
 	def newStaticTrace(self, button, widgets):
 		widgets['traceManager'].addTrace(sf.Vector2(int(widgets['xComboBox'].get_active_text()),\
-				int(widgets['yComboBox'].get_active_text())), widgets['nameEntered'].get_text())
+				int(widgets['yComboBox'].get_active_text())), widgets['nameEntered'].get_text(), "Normal")
 		if 'window' in widgets:
 			widgets['window'].destroy()
 
