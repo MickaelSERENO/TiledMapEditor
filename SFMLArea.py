@@ -31,11 +31,12 @@ class SFMLArea(Gtk.DrawingArea):
 		self.vslide.connect("value-changed", self.moveView, "vertical")
 		self.hslide.connect("value-changed", self.moveView, "horizontal")
 
-	def setSFMLSize(self, numberCases=None, tileSize=None):
-		if tileSize:
-			self.sizeCase = tileSize
+	def setSFMLSize(self, numberCases=None):
 		if numberCases:
+			print("change")
 			self.size = numberCases * self.sizeCase
+			for trace in self.listTrace:
+				trace.initStaticList(self.sizeCase)
 		self.render.size.x = min(self.render.size.x, self.size.x)
 		self.render.size.y = min(self.render.size.y, self.size.y)
 		self.render.view.size = copy(self.render.size)
@@ -156,10 +157,12 @@ class SFMLArea(Gtk.DrawingArea):
 			lineY[0].position += sf.Vector2(0, self.sizeCase.y)
 			lineY[1].position += sf.Vector2(0, self.sizeCase.y)
 
-	def do_drag_data_received(self, widget, context, x, y, selection_data, info, time):
-		for trace in listTrace.reverse():
-			if trace.canUpdate:
-				trace.addTile(widget, context, x, y, selection_data, info, time)
+	def do_drag_data_received(self, widget, context, x, y, selection_data, info, time=None):
+		if time:
+			for trace in self.listTrace[::-1]:
+				if trace.canUpdate:
+					trace.addTile(x, y)
+					return
 
 	def manageTile(self, action):
 		pass
@@ -170,33 +173,52 @@ class SFMLArea(Gtk.DrawingArea):
 
 	def addTrace(self, tileSize, style):
 		self.listTrace.append(Trace(tileSize, style))
+		self.listTrace[-1].initStaticList(self.size)
 
 class Trace:
 	def __init__(self, tileSize, style):
 		self.canUpdate = True
 		self.style = style
-		self.listTile = list(list())
+		self.listStaticTile = list(list())
+		self.listDynamicTile = list()
 		self.tileSize = tileSize
 		self.show = True
 
 	def update(self):
 		if not self.show:
 			return
-		for tile in [tile for content in self.listTile for tile in content]:
-			tile.update()
+		elif self.style == "Normal":
+			for tile in [tile for content in self.listStaticTile for tile in content]:
+				if tile:
+					tile.update()
+		else:
+			for tile in self.listDynamicTile:
+				if tile:
+					tile.update()
 
-	def addTile(self, widget, context, x, y, selection_data, info, time):
+	def addTile(self, x, y):
 		dndDatas = TileBox.dndDatas
 		if self.style=="Normal":
-			position = self.tileSize * sf.Vector2(\
+			indice = sf.Vector2(\
 				int(x/self.tileSize.x), int(y/self.tileSize.y))
+
+			self.listStaticTile[indice.x][indice.y]=Tile(indice*self.tileSize, TileBox.dndDatas['subRect'], \
+					TileBox.textureList[TileBox.dndDatas['file']])
 		else:
 			position = sf.Vector2(x, y)
 
-class Tile:
-	def __init__(self, position, subRect, texture, sfmlArea):
+	def initStaticList(self, size):
+		for x in range(len(self.listStaticTile), int(size.x/self.tileSize.x)):
+			self.listStaticTile.append(list())
+		for x in self.listStaticTile:
+			for y in range(len(x), int(size.y/self.tileSize.y)):
+				x.append(None)
+
+class Tile(Gtk.Widget):
+	def __init__(self, position, subRect, texture):
+		Gtk.Widget.__init__(self)
 		self.sprite = sf.Sprite(texture)
-		self.sprite.texture_rect = subRect
+		self.sprite.texture_rectangle = subRect
 		self.sprite.position = position
 
 	def update(self):

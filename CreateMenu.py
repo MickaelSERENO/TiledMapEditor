@@ -346,6 +346,7 @@ class CreateMenu:
 		if widgets['nameEntered'].get_text()[-4:] != ".xml":
 			addString = ".xml"
 		open("Files/" + widgets['nameEntered'].get_text() + addString, "w").close()
+
 		globalVar.sfmlArea.setSFMLSize(sf.Vector2(\
 				widgets["hNumberCases"].get_value(), widgets["vNumberCases"].get_value()),\
 				sf.Vector2(widgets["hTileSize"].get_value(), widgets["vTileSize"].get_value()))
