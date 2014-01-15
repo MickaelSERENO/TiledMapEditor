@@ -2,6 +2,7 @@ from gi.repository import Gtk, Gdk, GObject
 import sfml as sf
 from TileBox import TileBox
 from copy import copy
+from TraceTile import Trace, Tile
 import globalVar
 
 class SFMLArea(Gtk.DrawingArea):
@@ -13,8 +14,14 @@ class SFMLArea(Gtk.DrawingArea):
 		self.size = numberCases * sizeCase
 		self.sizeCase = sizeCase
 		self.numberCases = numberCases
+		self.set_can_focus(True)
 
 		self.connect("drag-data-received", self.do_drag_data_received)
+		self.connect("key-press-event", self.keyPressEvent)
+		self.connect("motion_notify_event", self.mouseMoveEvent) 
+		self.connect("button-press-event", self.buttonPressEvent)
+		self.connect("button-release-event", self.buttonReleaseEvent)
+		self.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
 		self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 		targets = Gtk.TargetList.new([])
 		targets.add_image_targets(0, True)
@@ -33,7 +40,6 @@ class SFMLArea(Gtk.DrawingArea):
 
 	def setSFMLSize(self, numberCases=None):
 		if numberCases:
-			print("change")
 			self.size = numberCases * self.sizeCase
 			for trace in self.listTrace:
 				trace.initStaticList(self.sizeCase)
@@ -61,9 +67,7 @@ class SFMLArea(Gtk.DrawingArea):
 		self.render.view.move(vector.x, vector.y)
 
 	def makePopupAction(self, actionGroup):
-		delCase = Gtk.Action("DelCase", "Delete", None, None)
-		delCase.connect("activate", self.manageTile, "delete")
-		actionGroup.add_action(delCase)
+		actionGroup.get_action("DelCase").connect("activate", self.manageTile, "delete")
 
 	def makePopup(self, uiManager, eventBox):
 		self.popupFull = uiManager.get_widget("/SFMLFullCase")
@@ -121,13 +125,12 @@ class SFMLArea(Gtk.DrawingArea):
 	def draw(self):
 		self.render.empty_event_loop()
 		self.render.clear()
-		self.drawQuad()
 		for trace in self.listTrace:
-			if trace.canUpdate:
+			if trace.show:
 				trace.update()
 		self.render.display()
 		return True
-		
+
 	def drawQuad(self):
 		position = self.render.view.center - self.render.view.size / 2
 		size = self.render.view.size
@@ -157,69 +160,47 @@ class SFMLArea(Gtk.DrawingArea):
 			lineY[0].position += sf.Vector2(0, self.sizeCase.y)
 			lineY[1].position += sf.Vector2(0, self.sizeCase.y)
 
+	def updateLastEventTrace(self, event):
+		for trace in self.listTrace[::-1]:
+			if trace.show:
+				trace.updateEventTile(event)
+				return
+		
+
 	def do_drag_data_received(self, widget, context, x, y, selection_data, info, time=None):
 		if time:
 			for trace in self.listTrace[::-1]:
-				if trace.canUpdate:
-					trace.addTile(x, y)
+				if trace.show:
+					pos = self.render.map_pixel_to_coords(sf.Vector2(x, y), self.render.view)
+					trace.addTile(pos.x, pos.y)
 					return
 
 	def manageTile(self, action):
 		pass
 
 	def buttonPressEvent(self, widget, event):
-		if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-			self.popupEmpty.popup(None, None, None, None, event.button, event.time)
+		if event.type == Gdk.EventType.BUTTON_PRESS:
+			if event.button == 3:
+				self.popupEmpty.popup(None, None, None, None, event.button, event.time)
+			elif event.button == 1:
+				self.get_toplevel().set_focus(self)
+		self.updateLastEventTrace(event)
+
+	def buttonReleaseEvent(self, widget, event):
+		if event.type == Gdk.EventType.BUTTON_RELEASE:
+			self.updateLastEventTrace(event)
+
+	def keyPressEvent(self, widget, event):
+		if event.type == Gdk.EventType.KEY_PRESS:
+			if event.keyval == Gdk.KEY_Delete:
+				self.listTrace[-1].deleteTile()
+
+	def mouseMoveEvent(self, widget, event):
+		if event.type == Gdk.EventType.MOTION_NOTIFY:
+			self.updateLastEventTrace(event)
+
 
 	def addTrace(self, tileSize, style):
 		self.listTrace.append(Trace(tileSize, style))
 		self.listTrace[-1].initStaticList(self.size)
 
-class Trace:
-	def __init__(self, tileSize, style):
-		self.canUpdate = True
-		self.style = style
-		self.listStaticTile = list(list())
-		self.listDynamicTile = list()
-		self.tileSize = tileSize
-		self.show = True
-
-	def update(self):
-		if not self.show:
-			return
-		elif self.style == "Normal":
-			for tile in [tile for content in self.listStaticTile for tile in content]:
-				if tile:
-					tile.update()
-		else:
-			for tile in self.listDynamicTile:
-				if tile:
-					tile.update()
-
-	def addTile(self, x, y):
-		dndDatas = TileBox.dndDatas
-		if self.style=="Normal":
-			indice = sf.Vector2(\
-				int(x/self.tileSize.x), int(y/self.tileSize.y))
-
-			self.listStaticTile[indice.x][indice.y]=Tile(indice*self.tileSize, TileBox.dndDatas['subRect'], \
-					TileBox.textureList[TileBox.dndDatas['file']])
-		else:
-			position = sf.Vector2(x, y)
-
-	def initStaticList(self, size):
-		for x in range(len(self.listStaticTile), int(size.x/self.tileSize.x)):
-			self.listStaticTile.append(list())
-		for x in self.listStaticTile:
-			for y in range(len(x), int(size.y/self.tileSize.y)):
-				x.append(None)
-
-class Tile(Gtk.Widget):
-	def __init__(self, position, subRect, texture):
-		Gtk.Widget.__init__(self)
-		self.sprite = sf.Sprite(texture)
-		self.sprite.texture_rectangle = subRect
-		self.sprite.position = position
-
-	def update(self):
-		globalVar.sfmlArea.render.draw(self.sprite)
