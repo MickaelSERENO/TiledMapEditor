@@ -131,35 +131,6 @@ class SFMLArea(Gtk.DrawingArea):
 		self.render.display()
 		return True
 
-	def drawQuad(self):
-		position = self.render.view.center - self.render.view.size / 2
-		size = self.render.view.size
-
-		posX = max(self.sizeCase.x * int(position.x/self.sizeCase.x), 0)
-		posY = max(self.sizeCase.y * int(position.y/self.sizeCase.y), 0)
-
-		lineX = sf.VertexArray(sf.PrimitiveType.LINES, 2)
-		lineY = sf.VertexArray(sf.PrimitiveType.LINES, 2)
-		lineX[0].color = sf.Color.WHITE
-		lineX[1].color = sf.Color.WHITE
-		lineX[0].position = sf.Vector2(posX, max(position.y, 0))
-		lineX[1].position = sf.Vector2(posX, min(position.y+size.y, self.size.y))
-
-		while lineX[0].position.x < position.x + size.x and not lineX[0].position.x > self.size.x:
-			self.render.draw(lineX)
-			lineX[0].position += sf.Vector2(self.sizeCase.x, 0)
-			lineX[1].position += sf.Vector2(self.sizeCase.x, 0)
-
-		lineY[0].color = sf.Color.WHITE
-		lineY[1].color = sf.Color.WHITE
-		lineY[0].position = sf.Vector2(max(position.x, 0), posY)
-		lineY[1].position = sf.Vector2(min(position.x+size.x, self.size.x), posY)
-
-		while lineY[0].position.y < position.y + size.y and not lineY[0].position.y > self.size.y:
-			self.render.draw(lineY)
-			lineY[0].position += sf.Vector2(0, self.sizeCase.y)
-			lineY[1].position += sf.Vector2(0, self.sizeCase.y)
-
 	def updateLastEventTrace(self, event):
 		for trace in self.listTrace[::-1]:
 			if trace.show:
