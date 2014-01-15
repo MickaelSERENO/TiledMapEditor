@@ -1,0 +1,2 @@
+sfmlArea = None
+tileWindow = None
