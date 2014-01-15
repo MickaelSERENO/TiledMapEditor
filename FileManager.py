@@ -26,7 +26,7 @@ class FileManager():
 				Gtk.FileChooserAction.SAVE, (Gtk.STOCK_SAVE, Gtk.ResponseType.OK, \
 				Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
 
-		return self._getFileName(dialog)
+		return self._getFileName(dialog, filt="xml")
 	
 	def setFilter(self, dialog, filt):
 		if filt=="xml":
