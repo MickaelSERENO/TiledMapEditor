@@ -32,7 +32,11 @@
 		<menuitem action="NewImage"/>
 	</popup>
 
-	<popup action="SFMLFullCase">
+	<popup name="SFMLFullCase">
 		<menuitem action="DelCase"/>
+	</popup>
+
+	<popup name="TilePopup">
+		<menuitem action="TileProperties"/>
 	</popup>
 </ui>

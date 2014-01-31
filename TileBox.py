@@ -43,7 +43,6 @@ class TileBox(Gtk.ScrolledWindow):
 
     def makeActionMenu(self, actionGroup):
         propAction = Gtk.Action("TileProperties", "Properties", None, None)
-        self.connect("button_press_event", self.pressButtonEvent)
         propAction.connect("activate", self.manageTile)
         actionGroup.add_action(propAction)
 
@@ -51,7 +50,7 @@ class TileBox(Gtk.ScrolledWindow):
         if tileSetFile and path.isfile(tileSetFile):
             tileSetFile = path.relpath(path.abspath(tileSetFile), path.abspath(path.dirname(__file__)))
             shutil.copy(tileSetFile, "Files")
-            fileName = path.basename(tileSetFile)
+            fileName = "Files/"+path.basename(tileSetFile)
 
             if fileName in TileBox.textureList:
                 return
@@ -59,7 +58,7 @@ class TileBox(Gtk.ScrolledWindow):
                 TileBox.textureList[fileName] = sf.Texture.from_file(fileName)
 
             expander = Gtk.Expander()
-            expander.set_label(tileSetFile)
+            expander.set_label(fileName.split('/')[1])
 
             treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf, int, int)
 
@@ -74,7 +73,7 @@ class TileBox(Gtk.ScrolledWindow):
                         sf.Rectangle(sf.Vector2(posX, posY), size))
 
                 originPixbuf.copy_area(posX, posY, min(size.x, originPixbuf.get_width() - posX), \
-                        min(size.y, originPixbuf.get_height() - posY),	pixbuf, 0, 0)
+                        min(size.y, originPixbuf.get_height() - posY),    pixbuf, 0, 0)
                 listPixbuf = [pixbuf, posX, posY]
                 posX += size.x + spacing.x
                 if posX >= originPixbuf.get_width():
@@ -85,19 +84,20 @@ class TileBox(Gtk.ScrolledWindow):
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(tileSetFile)
+            viewIcon.connect("button_press_event", self.pressButtonEvent)
 
             expander.add(viewIcon)
             self.staticBox.pack_start(expander, True, True, 0)
             self.show_all()
 
-    def manageTile(self):
-        pass
+    def manageTile(self, action):
+        print(action)
 
     def pressButtonEvent(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 3:
                 self.popupMenu.popup(None, None, None, None, event.button, event.time)
-			
+            
 class DragIconView(Gtk.IconView):
     def __init__(self, model, size, spacing, numColumn):
         Gtk.IconView.__init__(self, model)

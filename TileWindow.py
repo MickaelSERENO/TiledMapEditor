@@ -2,9 +2,9 @@ import platform
 import globalVar
 from gi.repository import Gtk, GObject, Gdk
 if platform.system() == "Linux":
-	from gi.repository import GdkX11
+    from gi.repository import GdkX11
 elif platform.system() == "Windows":
-	from gi.repository import GdkWin32
+    from gi.repository import GdkWin32
 from SFMLArea import SFMLArea
 from FileManager import FileManager
 from CreateMenu import CreateMenu
@@ -138,7 +138,7 @@ class TileWindow(Gtk.Window):
     def makeSFMLMenuAction(self, actionGroup):
         delCase = Gtk.Action("DelCase", "Delete", None, None)
         actionGroup.add_action(delCase)
-		
+        
     def createUIManager(self):
         with open("Ressources/UI_INFO.xml", 'r') as info:
             ui = Gtk.UIManager()
@@ -153,6 +153,6 @@ class TileWindow(Gtk.Window):
 
         elif action=="saveAs":
             print(self.fileManager.saveFile())
-	
+    
     def newFile(self, widget):
         self.newContents.newFile(self.fileManager)
