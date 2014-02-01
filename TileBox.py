@@ -80,14 +80,59 @@ class TileBox(Gtk.ScrolledWindow):
                     posX = 0
                     posY += size.y + spacing.y
                 treeStore.append(None, listPixbuf)
-            viewIcon = DragIconView(model=treeStore, size=size, spacing=spacing, numColumn=self.numColumn)
+            viewIcon = DragIconView(model=treeStore, style="Static", size=size, spacing=spacing, numColumn=self.numColumn)
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
-            viewIcon.set_name(tileSetFile)
+            viewIcon.set_name(fileName)
             viewIcon.connect("button_press_event", self.pressButtonEvent)
 
             expander.add(viewIcon)
             self.staticBox.pack_start(expander, True, True, 0)
+            self.show_all()
+
+    #An annimation have many entity with 4 attributes : position in x and y and size in x and y
+    def cutTileAnnimation(self, treeStoreAnnim, annimation, fileName):
+        if fileName and path.isfile(fileName):
+            fileName = path.relpath(path.abspath(fileName), path.abspath(path.dirname(__file__)))
+            shutil.copy(fileName, "Files")
+            fileName = "Files/"+path.basename(fileName)
+
+            if fileName in TileBox.textureList:
+                return
+            else:
+                TileBox.textureList[fileName] = sf.Texture.from_file(fileName)
+
+            expander = Gtk.Expander()
+            expander.set_label(fileName.split('/')[1])
+
+            treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf, int, int)
+
+            image = Gtk.Image()
+            image.set_from_file(fileName)
+            originPixbuf = image.get_pixbuf()
+
+            for i in range(treeStore.iter_n_children(annimation)):
+                posX = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 1))
+                posY = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 2))
+                sizeX = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 3))
+                sizeY = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 4))
+
+                pixbuf = TileIcon.new(GdkPixbuf.Colorspace.RGB, True, 8, sizeX, sizeY, \
+                        sf.Rectangle(sf.Vector2(posX, posY), sf.Vector2(sizeX, sizeY)))
+
+                originPixbuf.copy_area(posX, posY, min(sizeX, originPixbuf.get_width() - posX), \
+                        min(sizeY, originPixbuf.get_height() - posY), pixbuf, 0, 0)
+                listPixbuf = [pixbuf, posX, posY]
+                treeStore.append(None, listPixbuf)
+
+            viewIcon = DragIconView(model=treeStore, style="Dynamic", numColumn = self.numColumn)
+            viewIcon.set_columns(self.numColumn)
+            viewIcon.set_pixbuf_column(0)
+            viewIcon.set_name(treeStoreAnnim.get_value(annimation, 0))
+            viewIcon.connect("button_press_event", self.pressButtonEvent)
+
+            expander.add(viewIcon)
+            self.annimationBox.pack_start(expander, True, True, 0)
             self.show_all()
 
     def manageTile(self, action):
@@ -99,13 +144,15 @@ class TileBox(Gtk.ScrolledWindow):
                 self.popupMenu.popup(None, None, None, None, event.button, event.time)
             
 class DragIconView(Gtk.IconView):
-    def __init__(self, model, size, spacing, numColumn):
+    def __init__(self, model, style="Static", size=0, spacing=0, numColumn=0):
         Gtk.IconView.__init__(self, model)
         self.size = size
         self.spacing = spacing
         self.numColumn = numColumn
         self.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, [], Gdk.DragAction.COPY)
         self.connect("drag-data-get", self.do_drag_data_get)
+
+        self.style = style
 
         targets = Gtk.TargetList.new([])
         targets.add_image_targets(0, True)
@@ -118,8 +165,9 @@ class DragIconView(Gtk.IconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
-                    'position':self.getWidgetPosition(selected_path), 'file':self.get_name(),\
-                    'numColumn':self.numColumn, 'subRect':self.get_model().get_value(selected_iter, 0).rect}
+                    'position':self.getWidgetPositioN(Selected_path), 'file':self.get_name(),\
+                    'numColumn':self.numColumn, 'style':self.style,\
+                    'subRect':self.get_model().get_value(selected_iter, 0).rect}
 
     def getWidgetPosition(self, path):
         return self.get_columns() * self.get_item_row(path) +\
@@ -132,11 +180,7 @@ class DragIconView(Gtk.IconView):
         return vector
 
     def getIconSubRect(self, path):
-        vector = self.getXYWidgetPosition(self, path)
-        rect = sf.Rectangle()
-        rect.pos = (vector)*(self.spacing+self.size)
-        rect.size = copy(self.size)
-        return rect
+        return self.get_model().get_value(self.get_model().get_iter(path), 0).rect
 
     def manageProperties(self):
         pass
