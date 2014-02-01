@@ -254,8 +254,6 @@ class CreateMenu:
         vgrid.add(grid)
 
         widgets = dict()
-        widgets['table'] = self.newTable()
-        widgets['treeStore'] = widgets['table'].get_model()
 
         fileLabel = Gtk.Label("File")
 
@@ -274,7 +272,7 @@ class CreateMenu:
 
         box = Gtk.Box()
         buttonOK = Gtk.Button(label="OK")
-        buttonOK.connect("clicked", self.cutAnnimation)
+        buttonOK.connect("clicked", self.cutAnnimation, widgets)
         buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
                 Gtk.AccelFlags.VISIBLE)
         buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
@@ -320,6 +318,10 @@ class CreateMenu:
         if not widgets['imageEntered'].get_text():
             return
         window = Gtk.Window(title="New image")
+        widgets['table'] = self.newTable()
+        if not 'treeCopied' in widgets:
+            widgets['treeStore'] = widgets['table'].get_model()
+
         widgets['table'].set_model(widgets['treeStore'])
         treeCopy = functions.copyTreeStore(widgets['table'].get_model())
         widgets['treeCopied'] = treeCopy
@@ -335,6 +337,7 @@ class CreateMenu:
         vBox.pack_start(self.actionAnnimation(widgets), False, False, 0)
 
         window.set_property("modal",True)
+        window.connect('delete-event', self.cancelAnnimation, widgets)
         window.add(vBox)
         window.show_all()
 
@@ -350,6 +353,7 @@ class CreateMenu:
         vGrid.add(hbox)
 
         imagePixbuf = GdkPixbuf.Pixbuf.new_from_file(widgets['imageEntered'].get_text())
+        print(imagePixbuf.get_width())
         nameLabel = Gtk.Label("Name")
 
         titleLabel = Gtk.Label()
@@ -365,8 +369,8 @@ class CreateMenu:
         sizeYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
         xSpin = Gtk.SpinButton(adjustment=positionXAdjustment)
         ySpin = Gtk.SpinButton(adjustment=positionYAdjustment)
-        sizexSpin = Gtk.SpinButton(adjustment=sizeXAdjustment)
-        sizeySpin = Gtk.SpinButton(adjustment=sizeYAdjustment)
+        sizeXSpin = Gtk.SpinButton(adjustment=sizeXAdjustment)
+        sizeYSpin = Gtk.SpinButton(adjustment=sizeYAdjustment)
 
         addAnnim = Gtk.Button(label="Add")
         addEntity = Gtk.Button(label="Add")
@@ -385,9 +389,9 @@ class CreateMenu:
         grid.attach_next_to(ySpin, yLabel, Gtk.PositionType.RIGHT, 2, 1)
 
         grid.attach_next_to(sizeXLabel, yLabel, Gtk.PositionType.BOTTOM, 1, 1)
-        grid.attach_next_to(sizexSpin, sizeXLabel, Gtk.PositionType.RIGHT, 2, 1)
+        grid.attach_next_to(sizeXSpin, sizeXLabel, Gtk.PositionType.RIGHT, 2, 1)
         grid.attach_next_to(sizeYLabel, sizeXLabel, Gtk.PositionType.BOTTOM, 1, 1)
-        grid.attach_next_to(sizeySpin, sizeYLabel, Gtk.PositionType.RIGHT, 2, 1)
+        grid.attach_next_to(sizeYSpin, sizeYLabel, Gtk.PositionType.RIGHT, 2, 1)
 
         hbox.pack_start(addEntity, False, False, 0)
         hbox.pack_start(resetEntity, False, False, 0)
@@ -396,16 +400,44 @@ class CreateMenu:
 
 
         widgets['nameAnnimEntered'] = nameEntry
+
+        widgets['positionX'] = xSpin
+        widgets['positionY'] = ySpin
+        widgets['sizeX'] = sizeXSpin
+        widgets['sizeY'] = sizeYSpin
+
         addAnnim.connect('clicked', self.addAnniInTree, widgets)
+        addEntity.connect('clicked', self.addEntityInTree, widgets)
 
         return vGrid
 
     def addAnniInTree(self, button, widgets):
         parent=widgets['treeStore'].append(None)
         widgets['treeStore'].set_value(parent, 0, widgets['nameAnnimEntered'].get_text())
+
+    def addEntityInTree(self, button, widgets):
+        if len(widgets['treeStore']) == 0:
+            return
+        parent = widgets['table'].get_selection().get_selected()[1]
+        if not parent:
+            parent = widgets['treeStore'].get_iter(len(widgets['treeStore']) - 1)
+
+        while widgets['treeStore'].iter_parent(parent):
+            parent = widgets['treeStore'].iter_parent(parent)
+
+        widgets['treeStore'].insert_with_values(parent, -1, range(5), \
+                [widgets['treeStore'].iter_n_children(parent)+1,\
+                str(int(widgets['positionX'].get_value())),\
+                str(int(widgets['positionY'].get_value())),\
+                str(int(widgets['sizeX'].get_value())),\
+                str(int(widgets['sizeY'].get_value()))])
         
-    def cutAnnimation(self, button):
-        pass
+    def cutAnnimation(self, button, widgets):
+        if not 'table' in widgets:
+            return
+        for i in len(widgets['treeStore']):
+            self.parent.tileBox.cutTileAnnimation(widgets['treeStore'].get_iter(i),\
+                    widgets['imageEntered'].get_text())
 
     def actionAnnimation(self, widgets):
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -435,13 +467,18 @@ class CreateMenu:
         actionBox.pack_start(okButton, False, False, 0)
         actionBox.pack_start(cancelButton, False, False, 0)
 
-        cancelButton.connect('clicked', self.cancelAnnimation, widgets)
+        cancelButton.connect('clicked', self.cancelAnnimation, None, widgets)
+        okButton.connect('clicked', self.quitWindow, widgets['window'])
+        applyButton.connect('clicked', self.copieTreeStore, widgets)
 
         return box
 
-    def cancelAnnimation(self, button, widgets):
+    def copieTreeStore(self, button, widgets):
+        widgets['treeCopied'] = functions.copyTreeStore(widgets['treeStore'])
+
+    def cancelAnnimation(self, button, event, widgets):
+        widgets['table'].unparent()
         widgets['treeStore'] = widgets['treeCopied']
-        widgets['table'].set_model(widgets['treeStore'])
         self.quitWindow(button, widgets['window'])
 
     def newAnnimation(self, button, widgets):
