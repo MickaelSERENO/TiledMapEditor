@@ -20,20 +20,20 @@ class Trace:
         if not self.show:
             return
         self.drawQuad()
-        if self.style == "Normal":
+        if self.style == "Static":
             for tile in [tile for content in self.listStaticTile for tile in content]:
                 if tile:
                     tile.update()
-            else:
-                for tile in self.listDynamicTile:
-                    if tile:
-                        tile.update()
+        else:
+            for tile in self.listDynamicTile:
+                if tile:
+                    tile.update()
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
                 print(1)
-                if self.style == "Normal":
+                if self.style == "Static":
                     self.tileMoving = self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)]
                     if self.tileMoving: 
                         self.indiceTile = sf.Vector2(int(event.x / self.tileSize.x), int(event.y / self.tileSize.y))
@@ -51,7 +51,7 @@ class Trace:
 
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if self.tileMoving:
-                if self.style == "Normal":
+                if self.style == "Static":
                     self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
                     self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)] = self.tileMoving
                     self.tileMoving.position = sf.Vector2(self.tileSize.x * int(event.x / self.tileSize.x),\
@@ -60,13 +60,13 @@ class Trace:
 
     def addTile(self, x, y):
         dndDatas = TileBox.dndDatas
-        if self.style=="Normal":
+        if self.style=="Static" and dndDatas[style] == "Static":
             indice = sf.Vector2(\
                     int(x/self.tileSize.x), int(y/self.tileSize.y))
 
             self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize, TileBox.dndDatas['subRect'], \
                     TileBox.textureList[TileBox.dndDatas['file']])
-        else:
+        elif self.style=="Dynamic":
             position = sf.Vector2(x, y)
 
     def initStaticList(self, size):

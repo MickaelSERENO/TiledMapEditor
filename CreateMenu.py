@@ -365,8 +365,8 @@ class CreateMenu:
         nameEntry = Gtk.Entry()
         positionXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0) 
         positionYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
-        sizeXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0) 
-        sizeYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
+        sizeXAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0) 
+        sizeYAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_height(), 1, 10, 0) 
         xSpin = Gtk.SpinButton(adjustment=positionXAdjustment)
         ySpin = Gtk.SpinButton(adjustment=positionYAdjustment)
         sizeXSpin = Gtk.SpinButton(adjustment=sizeXAdjustment)
@@ -435,9 +435,11 @@ class CreateMenu:
     def cutAnnimation(self, button, widgets):
         if not 'table' in widgets:
             return
-        for i in len(widgets['treeStore']):
-            self.parent.tileBox.cutTileAnnimation(widgets['treeStore'].get_iter(i),\
+        for i in range(len(widgets['treeStore'])):
+            self.parent.tileBox.cutTileAnnimation(widgets['treeStore'],\
+                    widgets['treeStore'].get_iter(i),\
                     widgets['imageEntered'].get_text())
+        self.quitWindow(button, widgets['widgets'])
 
     def actionAnnimation(self, widgets):
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -487,7 +489,7 @@ class CreateMenu:
 
     def newStaticTrace(self, button, widgets):
         widgets['traceManager'].addTrace(sf.Vector2(int(widgets['xComboBox'].get_active_text()),\
-            int(widgets['yComboBox'].get_active_text())), widgets['nameEntered'].get_text(), "Normal")
+            int(widgets['yComboBox'].get_active_text())), widgets['nameEntered'].get_text(), "Static")
         if 'window' in widgets:
             widgets['window'].destroy()
 
