@@ -30,20 +30,21 @@ def copyTreeStore(tree):
     if not len(tree):
         return newTree
 
-    parent=newTree.append(None)
-    for i in range(tree.get_n_columns()):
-        newTree.set_value(parent, i, tree.get_value(tree.get_iter_first(), i))
+    for i in range(len(tree)):
+        parent=newTree.append(None)
+        for j in range(tree.get_n_columns()):
+            newTree.set_value(parent, j, tree.get_value(tree.get_iter(i), j))
 
-    getChildrenOfTreeStore(newTree, tree, getTreeStoreChild(tree, tree.get_iter_first()), parent)
+        copyChildrenOfTreeStore(newTree, tree, getTreeStoreChild(tree, tree.get_iter(i)), parent)
         
     return newTree
 
-def getChildrenOfTreeStore(newTree, tree, child, parent):
+def copyChildrenOfTreeStore(newTree, tree, child, parent):
     for i in range(len(child)):
         numberColumn = tree.get_n_columns()
         newParent = newTree.insert_with_values(parent, -1, range(numberColumn), \
                 [tree.get_value(child[i], val) for val in range(numberColumn)])
-        getChildrenOfTreeStore(newTree, tree, getTreeStoreChild(tree, child[i]), child[i])
+        copyChildrenOfTreeStore(newTree, tree, getTreeStoreChild(tree, child[i]), child[i])
 
 def getTreeStoreChild(tree, parent):
     return [tree.iter_nth_child(parent, i)\
