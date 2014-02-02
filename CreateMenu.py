@@ -180,9 +180,33 @@ class CreateMenu:
 
     def createNewDynamicTrace(self, window, traceManager):
         grid = Gtk.Grid()
+        vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+
+        vgrid.add(grid)
+        vgrid.add(hbox)
+
         nameLabel = Gtk.Label("Name")
         nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
-        return grid
+
+        grid.attach(nameLabel, 0, 0, 1, 1)
+        grid.attach_next_to(nameEntered, nameLabel, Gtk.PositionType.RIGHT, 2, 1)
+        widgets = dict()
+        widgets['nameEntered'] = nameEntered
+        widgets['window'] = window
+        widgets['traceManager'] = traceManager
+
+        buttonOK = Gtk.Button(label="OK")
+        buttonCancel = Gtk.Button(label="Cancel")
+
+        buttonOK.connect("clicked", self.newDynamicTrace, widgets)
+        buttonCancel.connect("clicked", self.quitWindow, window)
+
+        hbox.pack_start(buttonOK, False, False, 0)
+        hbox.pack_start(buttonCancel, False, False, 0)
+        hbox.set_halign(Gtk.Align.END)
+
+        return vgrid
 
     def createNewStaticTrace(self, window, traceManager):
         accelGroup = Gtk.AccelGroup()
@@ -254,6 +278,7 @@ class CreateMenu:
         vgrid.add(grid)
 
         widgets = dict()
+        widgets['imageWindow'] = window
 
         fileLabel = Gtk.Label("File")
 
@@ -353,7 +378,6 @@ class CreateMenu:
         vGrid.add(hbox)
 
         imagePixbuf = GdkPixbuf.Pixbuf.new_from_file(widgets['imageEntered'].get_text())
-        print(imagePixbuf.get_width())
         nameLabel = Gtk.Label("Name")
 
         titleLabel = Gtk.Label()
@@ -439,7 +463,8 @@ class CreateMenu:
             self.parent.tileBox.cutTileAnnimation(widgets['treeStore'],\
                     widgets['treeStore'].get_iter(i),\
                     widgets['imageEntered'].get_text())
-        self.quitWindow(button, widgets['widgets'])
+
+        self.quitWindow(button, widgets['imageWindow'])
 
     def actionAnnimation(self, widgets):
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -494,7 +519,9 @@ class CreateMenu:
             widgets['window'].destroy()
 
     def newDynamicTrace(self, button, widgets):
-        pass
+        widgets['traceManager'].addTrace(None, widgets['nameEntered'].get_text(), "Dynamic")
+        if 'window' in widgets:
+            widgets['window'].destroy()
 
     def quitWindow(self, *args, **kwargs):
         args[1].destroy()
