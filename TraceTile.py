@@ -41,7 +41,7 @@ class Trace:
 
                 else:
                     for tile in self.listDynamicTile[::-1]:
-                        if function.isMouseInRect(sf.Vector2(event.x, event.y), sf.Rect(tile.position, self.tileSize)):
+                        if functions.isMouseInRect(sf.Vector2(event.x, event.y), sf.Rect(tile.position, self.tileSize)):
                             self.tileMoving = tile
                             break
 
@@ -64,10 +64,12 @@ class Trace:
             indice = sf.Vector2(\
                     int(x/self.tileSize.x), int(y/self.tileSize.y))
 
-            self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize, TileBox.dndDatas['subRect'], \
-                    TileBox.textureList[TileBox.dndDatas['file']])
+            self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize,\
+                    dndDatas['subRect'], TileBox.textureList[dndDatas['name']])
         elif self.style=="Dynamic":
             position = sf.Vector2(x, y)
+            self.listDynamicTile.append(Tile(self, position, dndDatas['subRect'], \
+                    TileBox.textureList[dndDatas['name']]))
 
     def initStaticList(self, size):
         for x in range(len(self.listStaticTile), int(size.x/self.tileSize.x)):
@@ -77,6 +79,8 @@ class Trace:
                     x.append(None)
 
     def drawQuad(self):
+        if self.style == "Dynamic":
+            return
         position = globalVar.sfmlArea.render.view.center - globalVar.sfmlArea.render.view.size / 2
         size = globalVar.sfmlArea.render.view.size
 
