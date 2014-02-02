@@ -54,7 +54,7 @@ class TraceManager(Gtk.Box):
         self.toolButton['moveUp'].connect("clicked", self.moveTrace, True)
         self.toolButton['delete'].connect("clicked", self.deleteTrace)
 
-    def addTrace(self, tileSize, name, style="Normal"):
+    def addTrace(self, tileSize, name, style="Static"):
         self.listStore.append([True, name])
         globalVar.sfmlArea.addTrace(tileSize, style)
         self.show_all()

@@ -100,10 +100,10 @@ class TileBox(Gtk.ScrolledWindow):
             if fileName in TileBox.textureList:
                 return
             else:
-                TileBox.textureList[fileName] = sf.Texture.from_file(fileName)
+                TileBox.textureList[treeStoreAnnim.get_value(annimation, 0)] = sf.Texture.from_file(fileName)
 
             expander = Gtk.Expander()
-            expander.set_label(fileName.split('/')[1])
+            expander.set_label(treeStoreAnnim.get_value(annimation, 0))
 
             treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf, int, int)
 
@@ -165,7 +165,7 @@ class DragIconView(Gtk.IconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
-                    'position':self.getWidgetPositioN(Selected_path), 'file':self.get_name(),\
+                    'position':self.getWidgetPosition(selected_path), 'name':self.get_name(),\
                     'numColumn':self.numColumn, 'style':self.style,\
                     'subRect':self.get_model().get_value(selected_iter, 0).rect}
 

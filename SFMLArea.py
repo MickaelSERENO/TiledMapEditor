@@ -173,4 +173,5 @@ class SFMLArea(Gtk.DrawingArea):
 
     def addTrace(self, tileSize, style):
         self.listTrace.append(Trace(tileSize, style))
-        self.listTrace[-1].initStaticList(self.size)
+        if style == "Static":
+            self.listTrace[-1].initStaticList(self.size)
