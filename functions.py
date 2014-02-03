@@ -16,7 +16,7 @@ def isInEllipse(pos, center, radius):
     return (pos.x - center.x)**2 / radius.x**2 + \
             (pos.y - center.y)**2 / radius.y**2 <= 1
 
-def isMouseInRect(rect, mousePos):
+def isMouseInRect(mousePos, rect):
     if mousePos.x > rect.left and\
             mousePos.y > rect.top and\
             mousePos.x < rect.left + rect.width and\

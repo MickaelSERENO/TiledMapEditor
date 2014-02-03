@@ -68,19 +68,22 @@ class TileBox(Gtk.ScrolledWindow):
             posX = 0
             posY = 0
 
+            tileID = 0
+
             while posY < originPixbuf.get_height():
                 pixbuf = TileIcon.new(GdkPixbuf.Colorspace.RGB, True, 8, size.x, size.y, \
-                        sf.Rectangle(sf.Vector2(posX, posY), size))
+                        sf.Rectangle(sf.Vector2(posX, posY), size), tileID)
 
                 originPixbuf.copy_area(posX, posY, min(size.x, originPixbuf.get_width() - posX), \
-                        min(size.y, originPixbuf.get_height() - posY),    pixbuf, 0, 0)
+                        min(size.y, originPixbuf.get_height() - posY), pixbuf, 0, 0)
                 listPixbuf = [pixbuf, posX, posY]
                 posX += size.x + spacing.x
                 if posX >= originPixbuf.get_width():
                     posX = 0
                     posY += size.y + spacing.y
                 treeStore.append(None, listPixbuf)
-            viewIcon = DragIconView(model=treeStore, style="Static", size=size, spacing=spacing, numColumn=self.numColumn)
+                tileID = tileID + 1
+            viewIcon = StaticDragIconView(treeStore, size, spacing, self.numColumn)
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(fileName)
@@ -118,14 +121,15 @@ class TileBox(Gtk.ScrolledWindow):
                 sizeY = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 4))
 
                 pixbuf = TileIcon.new(GdkPixbuf.Colorspace.RGB, True, 8, sizeX, sizeY, \
-                        sf.Rectangle(sf.Vector2(posX, posY), sf.Vector2(sizeX, sizeY)))
+                        sf.Rectangle(sf.Vector2(posX, posY), sf.Vector2(sizeX, sizeY)), \
+                        treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 0))
 
                 originPixbuf.copy_area(posX, posY, min(sizeX, originPixbuf.get_width() - posX), \
                         min(sizeY, originPixbuf.get_height() - posY), pixbuf, 0, 0)
                 listPixbuf = [pixbuf, posX, posY]
                 treeStore.append(None, listPixbuf)
 
-            viewIcon = DragIconView(model=treeStore, style="Dynamic", numColumn = self.numColumn)
+            viewIcon = DynamicDragIconView(treeStore, self.numColumn)
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(treeStoreAnnim.get_value(annimation, 0))
@@ -144,30 +148,18 @@ class TileBox(Gtk.ScrolledWindow):
                 self.popupMenu.popup(None, None, None, None, event.button, event.time)
             
 class DragIconView(Gtk.IconView):
-    def __init__(self, model, style="Static", size=0, spacing=0, numColumn=0):
+    def __init__(self, model, numColumn):
         Gtk.IconView.__init__(self, model)
-        self.size = size
-        self.spacing = spacing
         self.numColumn = numColumn
         self.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, [], Gdk.DragAction.COPY)
         self.connect("drag-data-get", self.do_drag_data_get)
-
-        self.style = style
 
         targets = Gtk.TargetList.new([])
         targets.add_image_targets(0, True)
         self.drag_source_set_target_list(targets)
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
-        if time:
-            selected_path = self.get_selected_items()[0]
-            selected_iter = self.get_model().get_iter(selected_path)
-            selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
-
-            TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
-                    'position':self.getWidgetPosition(selected_path), 'name':self.get_name(),\
-                    'numColumn':self.numColumn, 'style':self.style,\
-                    'subRect':self.get_model().get_value(selected_iter, 0).rect}
+        return
 
     def getWidgetPosition(self, path):
         return self.get_columns() * self.get_item_row(path) +\
@@ -185,8 +177,46 @@ class DragIconView(Gtk.IconView):
     def manageProperties(self):
         pass
 
+class StaticDragIconView(DragIconView):
+    def __init__(self, model, size, spacing, numColumn):
+        DragIconView.__init__(self, model, numColumn)
+        self.size = size
+        self.spacing = spacing
+        self.style = "Static"
+
+    def do_drag_data_get(self, widget, context, selection_data, info, time=None):
+        if time:
+            selected_path = self.get_selected_items()[0]
+            selected_iter = self.get_model().get_iter(selected_path)
+            selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
+
+            TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
+                    'name':self.get_name(),\
+                    'numColumn':self.numColumn, 'style':self.style,\
+                    'subRect':self.get_model().get_value(selected_iter, 0).rect,
+                    'tileID':self.get_model().get_value(selected_iter, 0).tileID}
+
+class DynamicDragIconView(DragIconView):
+    def __init__(self, model, numColumn):
+        DragIconView.__init__(self, model, numColumn)
+        self.style = "Dynamic"
+
+    def do_drag_data_get(self, widget, context, selection_data, info, time=None):
+        if time:
+            print('info', info, '\n selection_data', selection_data)
+            selected_path = self.get_selected_items()[0]
+            selected_iter = self.get_model().get_iter(selected_path)
+            selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
+
+            TileBox.dndDatas = {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
+                    'name':self.get_name(),\
+                    'numColumn':self.numColumn,\
+                    'style':self.style,\
+                    'subRect':self.get_model().get_value(selected_iter, 0).rect}
+
 class TileIcon(GdkPixbuf.Pixbuf):
-    def new(color, tf, deep, sizex, sizey, rect):
+    def new(color, tf, deep, sizex, sizey, rect, tileID):
         objet = GdkPixbuf.Pixbuf.new(color, tf, deep, sizex, sizey)
         objet.rect = rect
+        objet.tileID = tileID
         return objet

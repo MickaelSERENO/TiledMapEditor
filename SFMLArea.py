@@ -2,7 +2,7 @@ from gi.repository import Gtk, Gdk, GObject
 import sfml as sf
 from TileBox import TileBox
 from copy import copy
-from TraceTile import Trace, Tile
+from TraceTile import StaticTrace, Tile, DynamicTrace
 import globalVar
 
 class SFMLArea(Gtk.DrawingArea):
@@ -136,7 +136,6 @@ class SFMLArea(Gtk.DrawingArea):
             if trace.show:
                 trace.updateEventTile(event)
                 return
-        
 
     def do_drag_data_received(self, widget, context, x, y, selection_data, info, time=None):
         if time:
@@ -172,6 +171,8 @@ class SFMLArea(Gtk.DrawingArea):
 
 
     def addTrace(self, tileSize, style):
-        self.listTrace.append(Trace(tileSize, style))
         if style == "Static":
+            self.listTrace.append(StaticTrace(tileSize))
             self.listTrace[-1].initStaticList(self.size)
+        else:
+            self.listTrace.append(DynamicTrace())

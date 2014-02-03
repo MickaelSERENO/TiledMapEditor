@@ -6,81 +6,43 @@ import functions
 import globalVar
 
 class Trace:
-    def __init__(self, tileSize, style):
-        self.style = style
-        self.listStaticTile = list(list())
-        self.listDynamicTile = list()
-        self.tileSize = tileSize
+    def __init__(self):
         self.show = True
         self.tileMoving = None
-        self.indiceTile = None
         self.posMoving = sf.Vector2(0, 0)
 
     def update(self):
         if not self.show:
-            return
-        self.drawQuad()
-        if self.style == "Static":
-            for tile in [tile for content in self.listStaticTile for tile in content]:
-                if tile:
-                    tile.update()
-        else:
-            for tile in self.listDynamicTile:
-                if tile:
-                    tile.update()
+            return False
+        return True
 
     def updateEventTile(self, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 1:
-                print(1)
-                if self.style == "Static":
-                    self.tileMoving = self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)]
-                    if self.tileMoving: 
-                        self.indiceTile = sf.Vector2(int(event.x / self.tileSize.x), int(event.y / self.tileSize.y))
-                        self.posMoving = sf.Vector2(event.x, event.y) - self.indiceTile * self.tileSize
-
-                else:
-                    for tile in self.listDynamicTile[::-1]:
-                        if functions.isMouseInRect(sf.Vector2(event.x, event.y), sf.Rect(tile.position, self.tileSize)):
-                            self.tileMoving = tile
-                            break
-
         if event.type == Gdk.EventType.MOTION_NOTIFY:
             if self.tileMoving:
                 self.tileMoving.position = sf.Vector2(event.x, event.y) - self.posMoving
 
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if self.tileMoving:
-                if self.style == "Static":
-                    self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
-                    self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)] = self.tileMoving
-                    self.tileMoving.position = sf.Vector2(self.tileSize.x * int(event.x / self.tileSize.x),\
-                            self.tileSize.y * int(event.y / self.tileSize.y))
                 self.tileMoving = None
 
     def addTile(self, x, y):
-        dndDatas = TileBox.dndDatas
-        if self.style=="Static" and dndDatas[style] == "Static":
-            indice = sf.Vector2(\
-                    int(x/self.tileSize.x), int(y/self.tileSize.y))
-
-            self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize,\
-                    dndDatas['subRect'], TileBox.textureList[dndDatas['name']])
-        elif self.style=="Dynamic":
-            position = sf.Vector2(x, y)
-            self.listDynamicTile.append(Tile(self, position, dndDatas['subRect'], \
-                    TileBox.textureList[dndDatas['name']]))
-
-    def initStaticList(self, size):
-        for x in range(len(self.listStaticTile), int(size.x/self.tileSize.x)):
-            self.listStaticTile.append(list())
-            for x in self.listStaticTile:
-                for y in range(len(x), int(size.y/self.tileSize.y)):
-                    x.append(None)
+        return
 
     def drawQuad(self):
-        if self.style == "Dynamic":
-            return
+        return
+
+class StaticTrace(Trace):
+    def __init__(self, tileSize):
+        Trace.__init__(self)
+        self.listStaticTile = list(list())
+        self.tileSize = tileSize
+        self.show = True
+        self.tileMoving = None
+        self.indiceTile = None
+        self.posMoving = sf.Vector2(0, 0)
+        self.style="Static"
+
+    def drawQuad(self):
         position = globalVar.sfmlArea.render.view.center - globalVar.sfmlArea.render.view.size / 2
         size = globalVar.sfmlArea.render.view.size
 
@@ -109,10 +71,90 @@ class Trace:
             lineY[0].position += sf.Vector2(0, self.tileSize.y)
             lineY[1].position += sf.Vector2(0, self.tileSize.y)
 
+    def addTile(self, x, y):
+        dndDatas = TileBox.dndDatas
+        if dndDatas['style'] == "Static":
+            indice = sf.Vector2(\
+                    int(x/self.tileSize.x), int(y/self.tileSize.y))
+            self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize,\
+                    dndDatas['subRect'], TileBox.textureList[dndDatas['name']])
+
+    def updateEventTile(self, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:
+                self.tileMoving = self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)]
+                if self.tileMoving: 
+                    self.indiceTile = sf.Vector2(int(event.x / self.tileSize.x), int(event.y / self.tileSize.y))
+                    self.posMoving = sf.Vector2(event.x, event.y) - self.indiceTile * self.tileSize
+
+        if event.type == Gdk.EventType.BUTTON_RELEASE:
+            if self.tileMoving:
+                self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
+                self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)] = self.tileMoving
+                self.tileMoving.position = sf.Vector2(self.tileSize.x * int(event.x / self.tileSize.x),\
+                        self.tileSize.y * int(event.y / self.tileSize.y))
+
+        Trace.updateEventTile(self, event)
+
+    def update(self):
+        if not Trace.update(self):
+            return
+        self.drawQuad()
+        for tile in [tile for content in self.listStaticTile for tile in content]:
+            if tile:
+                tile.update()
+
+    def initStaticList(self, size):
+        for x in range(len(self.listStaticTile), int(size.x/self.tileSize.x)):
+            self.listStaticTile.append(list())
+            for x in self.listStaticTile:
+                for y in range(len(x), int(size.y/self.tileSize.y)):
+                    x.append(None)
+
+class DynamicTrace(Trace):
+    def __init__(self):
+        Trace.__init__(self)
+        self.listDynamicTile = list()
+        self.style="Dynamic"
+
+    def update(self):
+        if not Trace.update(self):
+            return
+        for tile in self.listDynamicTile:
+            if tile:
+                tile.update()
+
+    def updateEventTile(self, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:
+                for tile in self.listDynamicTile[::-1]:
+                    if functions.isMouseInRect(sf.Vector2(event.x, event.y),\
+                            tile.rect):
+                        self.tileMoving = tile
+                        self.posMoving = sf.Vector2(event.x, event.y) - tile.position
+                        break
+
+        if event.type == Gdk.EventType.BUTTON_RELEASE:
+            if self.tileMoving:
+                self.tileMoving.position = sf.Vector2(event.x, event.y) - self.posMoving
+
+        Trace.updateEventTile(self, event)
+
+    def addTile(self, x, y):
+        dndDatas = TileBox.dndDatas
+        position = sf.Vector2(x, y)
+        if dndDatas['style'] == "Static":
+            self.listDynamicTile.append(StaticTile(dndDatas['tileID'], position, dndDatas['subRect'],\
+                    TileBox.textureList[dndDatas['name']]))
+        else:
+            self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], position, dndDatas['subRect'],\
+                    TileBox.textureList[dndDatas['name']]))
+
 class Tile:
-    def __init__(self, parent, position, subRect, texture):
+    def __init__(self, tileID, position, subRect, texture):
         self.sprite = sf.Sprite(texture)
         self.sprite.texture_rectangle = subRect
+        self.tileID = tileID
         self.sprite.position = position
 
     def update(self):
@@ -122,3 +164,14 @@ class Tile:
         self.sprite.position = position
 
     position = property(lambda self : self.sprite.position, setPosition)
+    rect = property(lambda self : self.sprite.global_bounds)
+
+class StaticTile(Tile):
+    def __init__(self, tileID, position, subRect, texture):
+        Tile.__init__(self, tileID, position, subRect, texture)
+        self.style = "Static"
+
+class DynamicTile(Tile):
+    def __init__(self, tileID, position, subRect, texture):
+        Tile.__init__(self, tileID, position, subRect, texture)
+        self.style = "Dynamic"
