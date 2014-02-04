@@ -56,23 +56,23 @@ class CreateMenu:
         vgrid.add(grid)
         hbox = Gtk.Box()
 
-        buttonOK = Gtk.Button(label="OK")
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+        okButton = Gtk.Button(label="OK")
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.connect("clicked", self.initNewFile, \
+        okButton.connect("clicked", self.initNewFile, \
                 {'hTileSize':spinTileLeft, 'vTileSize':spinTileRight, \
                 'hNumberCases':spinCasesLeft, 'vNumberCases':spinCasesRight, \
                 'nameEntered':nameEntered, 'window':window})
 
-        buttonCancel = Gtk.Button(label="Cancel")
-        buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+        cancelButton = Gtk.Button(label="Cancel")
+        cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
                 Gtk.AccelFlags.MASK)
-        buttonCancel.connect("clicked", self.quitWindow, window)
+        cancelButton.connect("clicked", self.quitWindow, window)
 
-        hbox.pack_start(buttonCancel, False, False, 0)
-        hbox.pack_start(buttonOK, False, False, 0)
+        hbox.pack_start(cancelButton, False, False, 0)
+        hbox.pack_start(okButton, False, False, 0)
         vgrid.add(hbox)
         hbox.set_halign(Gtk.Align.END)
         hbox.set_valign(Gtk.Align.END)
@@ -141,23 +141,23 @@ class CreateMenu:
         grid.attach_next_to(xBisLabel, spinSpaceLeft, Gtk.PositionType.RIGHT, 1, 1)
         grid.attach_next_to(spinSpaceRight, xBisLabel, Gtk.PositionType.RIGHT, 1, 1)
         hbox = Gtk.Box()
-        buttonOK = Gtk.Button(label="OK")
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+        okButton = Gtk.Button(label="OK")
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.connect("clicked", self.newTileSet, \
+        okButton.connect("clicked", self.newTileSet, \
         {'hTileSize':spinTileLeft, 'vTileSize':spinTileRight, \
         'hTileSpace':spinSpaceLeft, 'vTileSpace':spinSpaceRight, \
         'imageEntered':imageEntered, 'fileManager':fileManager, \
                 'tileBox':tileBox, 'window':window})
-        buttonCancel = Gtk.Button(label="Cancel")
-        buttonCancel.connect("clicked", self.quitWindow, window)
-        buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+        cancelButton = Gtk.Button(label="Cancel")
+        cancelButton.connect("clicked", self.quitWindow, window)
+        cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
                 Gtk.AccelFlags.MASK)
 
-        hbox.pack_start(buttonCancel, False, False, 0)
-        hbox.pack_start(buttonOK, False, False, 0)
+        hbox.pack_start(cancelButton, False, False, 0)
+        hbox.pack_start(okButton, False, False, 0)
         vgrid.add(hbox)
         hbox.set_halign(Gtk.Align.END)
         hbox.set_valign(Gtk.Align.END)
@@ -196,14 +196,14 @@ class CreateMenu:
         widgets['window'] = window
         widgets['traceManager'] = traceManager
 
-        buttonOK = Gtk.Button(label="OK")
-        buttonCancel = Gtk.Button(label="Cancel")
+        okButton = Gtk.Button(label="OK")
+        cancelButton = Gtk.Button(label="Cancel")
 
-        buttonOK.connect("clicked", self.newDynamicTrace, widgets)
-        buttonCancel.connect("clicked", self.quitWindow, window)
+        okButton.connect("clicked", self.newDynamicTrace, widgets)
+        cancelButton.connect("clicked", self.quitWindow, window)
 
-        hbox.pack_start(buttonOK, False, False, 0)
-        hbox.pack_start(buttonCancel, False, False, 0)
+        hbox.pack_start(okButton, False, False, 0)
+        hbox.pack_start(cancelButton, False, False, 0)
         hbox.set_halign(Gtk.Align.END)
 
         return vgrid
@@ -237,21 +237,21 @@ class CreateMenu:
         grid.attach_next_to(yComboBox, xLabel, Gtk.PositionType.RIGHT, 1, 1)
 
         hbox = Gtk.Box()
-        buttonOK = Gtk.Button(label="OK")
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+        okButton = Gtk.Button(label="OK")
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.connect("clicked", self.newStaticTrace, \
+        okButton.connect("clicked", self.newStaticTrace, \
                 {'xComboBox':xComboBox, 'yComboBox':yComboBox,\
                 'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window})
-        buttonCancel = Gtk.Button(label="Cancel")
-        buttonCancel.connect("clicked", self.quitWindow, window)
-        buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+        cancelButton = Gtk.Button(label="Cancel")
+        cancelButton.connect("clicked", self.quitWindow, window)
+        cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
                 Gtk.AccelFlags.MASK)
 
-        hbox.pack_start(buttonCancel, False, False, 0)
-        hbox.pack_start(buttonOK, False, False, 0)
+        hbox.pack_start(cancelButton, False, False, 0)
+        hbox.pack_start(okButton, False, False, 0)
         vgrid.add(hbox)
 
         hbox.set_halign(Gtk.Align.END)
@@ -296,19 +296,19 @@ class CreateMenu:
         hbox.pack_start(setTableSize, False, False, 0)
 
         box = Gtk.Box()
-        buttonOK = Gtk.Button(label="OK")
-        buttonOK.connect("clicked", self.cutAnnimation, widgets)
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+        okButton = Gtk.Button(label="OK")
+        okButton.connect("clicked", self.cutAnnimation, widgets)
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
                 Gtk.AccelFlags.VISIBLE)
-        buttonOK.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
                 Gtk.AccelFlags.VISIBLE)
 
-        buttonCancel = Gtk.Button(label="Cancel")
-        buttonCancel.connect("clicked", self.quitWindow, window)
-        buttonCancel.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+        cancelButton = Gtk.Button(label="Cancel")
+        cancelButton.connect("clicked", self.quitWindow, window)
+        cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
                 Gtk.AccelFlags.MASK)
-        box.pack_start(buttonCancel, False, False, 0)
-        box.pack_start(buttonOK, False, False, 0)
+        box.pack_start(cancelButton, False, False, 0)
+        box.pack_start(okButton, False, False, 0)
         box.set_halign(Gtk.Align.END)
         hbox.pack_start(box, True, True, 0)
 
@@ -432,6 +432,7 @@ class CreateMenu:
 
         addAnnim.connect('clicked', self.addAnniInTree, widgets)
         addEntity.connect('clicked', self.addEntityInTree, widgets)
+        resetEntity.connect('click', self.resetEntity, widgets)
 
         return vGrid
 
@@ -456,6 +457,13 @@ class CreateMenu:
                 str(int(widgets['sizeX'].get_value())),\
                 str(int(widgets['sizeY'].get_value()))])
         
+
+    def resetEntity(self, button, widgets):
+        widgets['positionX'].set_value(widgets['positionX'].get_lower())
+        widgets['positionY'].set_value(widgets['positionY'].get_lower())
+        widgets['sizeX'].set_value(widgets['sizeX'].get_lower())
+        widgets['sizeY'].set_value(widgets['sizeY'].get_lower())
+
     def cutAnnimation(self, button, widgets):
         if not 'table' in widgets:
             return
@@ -485,7 +493,9 @@ class CreateMenu:
         applyButton = Gtk.Button(label="Apply")
 
         clearAll = Gtk.Button(label="Clear")
+        clearAll.connect('clicked', lambda b, treeStore : treeStore.clear(), widgets['treeStore'])
         delete = Gtk.Button(label="Delete")
+        delete.connect('clicked', self.deleteEntryInTreeStore, widgets)
 
         delBox.pack_start(delete, False, False, 0)
         delBox.pack_start(clearAll, False, False, 0)
@@ -500,6 +510,13 @@ class CreateMenu:
 
         return box
 
+    def deleteEntryInTreeStore(self, button, widgets):
+        parent = widgets['table'].get_selection().get_selected()[1]
+        if not parent:
+            return
+        widgets['treeStore'].remove(parent)
+
+
     def copieTreeStore(self, button, widgets):
         widgets['treeCopied'] = functions.copyTreeStore(widgets['treeStore'])
 
@@ -507,10 +524,6 @@ class CreateMenu:
         widgets['table'].unparent()
         widgets['treeStore'] = widgets['treeCopied']
         self.quitWindow(button, widgets['window'])
-
-    def newAnnimation(self, button, widgets):
-        print(widgets['xComboBox'].get_active())
-            #widgets['traceManager'].addTrace(sf.Vector2(widgets['xComboBox'].get_va
 
     def newStaticTrace(self, button, widgets):
         widgets['traceManager'].addTrace(sf.Vector2(int(widgets['xComboBox'].get_active_text()),\

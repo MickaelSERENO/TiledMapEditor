@@ -73,11 +73,10 @@ class StaticTrace(Trace):
 
     def addTile(self, x, y):
         dndDatas = TileBox.dndDatas
-        if dndDatas['style'] == "Static":
-            indice = sf.Vector2(\
-                    int(x/self.tileSize.x), int(y/self.tileSize.y))
-            self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize,\
-                    dndDatas['subRect'], TileBox.textureList[dndDatas['name']])
+        indice = sf.Vector2(\
+                int(x/self.tileSize.x), int(y/self.tileSize.y))
+        self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize,\
+                dndDatas['subRect'], TileBox.textureList[dndDatas['name']])
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -137,18 +136,82 @@ class DynamicTrace(Trace):
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if self.tileMoving:
                 self.tileMoving.position = sf.Vector2(event.x, event.y) - self.posMoving
-
+ 
         Trace.updateEventTile(self, event)
 
     def addTile(self, x, y):
+        self.makeAddTileWindowPrompt(x, y)
+
+    def makeAddTileWindowPrompt(self, x, y):
         dndDatas = TileBox.dndDatas
-        position = sf.Vector2(x, y)
-        if dndDatas['style'] == "Static":
-            self.listDynamicTile.append(StaticTile(dndDatas['tileID'], position, dndDatas['subRect'],\
-                    TileBox.textureList[dndDatas['name']]))
-        else:
-            self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], position, dndDatas['subRect'],\
-                    TileBox.textureList[dndDatas['name']]))
+        window = Gtk.Window(title="Annimation")
+        window.set_property('modal', True)
+
+        accelGroup = Gtk.AccelGroup()
+        window.add_accel_group(accelGroup)
+
+        vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
+        grid = Gtk.Grid()
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hbox.set_halign(Gtk.Align.END)
+
+        vgrid.add(grid)
+        vgrid.add(hbox)
+
+        timeLabel = Gtk.Label("Time (ms)")
+        adjustmentTime = Gtk.Adjustment(1, 1, 10000, 1, 100, -1)
+        timeEntry = Gtk.SpinButton(adjustment = adjustmentTime)
+
+        originLabel = Gtk.Label("Origin")
+        xLabel = Gtk.Label('x')
+        xAdjustmentOrigin = Gtk.Adjustment(0, 0, 100, 1, 10, -1)
+        yAdjustmentOrigin = Gtk.Adjustment(0, 0, 100, 1, 10, -1)
+        xOriginEntry = Gtk.SpinButton(adjustment = xAdjustmentOrigin)
+        yOriginEntry = Gtk.SpinButton(adjustment = yAdjustmentOrigin)
+
+        widgets = dict()
+        widgets['timeEntry'] = timeEntry
+        widgets['xOriginEntry'] = xOriginEntry
+        widgets['yOriginEntry'] = yOriginEntry
+        widgets['position'] = sf.Vector2(x, y)
+        widgets['window'] = window
+
+        okButton = Gtk.Button(label='OK')
+        cancelButton = Gtk.Button(label="Cancel")
+
+        grid.attach(timeLabel, 0, 0, 1, 1)
+        grid.attach_next_to(timeEntry, timeLabel, Gtk.PositionType.RIGHT, 3, 1)
+        grid.attach_next_to(originLabel, timeLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(xOriginEntry, originLabel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(xLabel, xOriginEntry, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(yOriginEntry, xLabel, Gtk.PositionType.RIGHT, 1, 1)
+
+        hbox.pack_start(okButton, False, False, 0)
+        hbox.pack_start(cancelButton, False, False, 0)
+
+        window.connect("destroy", lambda event, w : w.destroy(), window)
+        okButton.connect('clicked', self.confirmAddTile, widgets)
+        cancelButton.connect('clicked', lambda button, w : w.destroy(), window)
+
+        cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
+                Gtk.AccelFlags.MASK)
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
+                Gtk.AccelFlags.VISIBLE)
+        okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
+                Gtk.AccelFlags.VISIBLE)
+
+        window.add(vgrid)
+        window.show_all()
+
+    def confirmAddTile(self, button, widgets):
+        dndDatas = TileBox.dndDatas
+        origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
+        self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
+                widgets['timeEntry'].get_value(), origin, widgets['position'],\
+                dndDatas['subRect'], TileBox.textureList[dndDatas['name']]))
+        if 'window' in widgets:
+            widgets['window'].destroy()
+
 
 class Tile:
     def __init__(self, tileID, position, subRect, texture):
@@ -172,6 +235,8 @@ class StaticTile(Tile):
         self.style = "Static"
 
 class DynamicTile(Tile):
-    def __init__(self, tileID, position, subRect, texture):
+    def __init__(self, tileID, timeAnnim, origin, position, subRect, texture):
         Tile.__init__(self, tileID, position, subRect, texture)
         self.style = "Dynamic"
+        self.timeAnnim = timeAnnim
+        self.origin = origin
