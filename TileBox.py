@@ -30,10 +30,11 @@ class TileBox(Gtk.ScrolledWindow):
         self.set_size_request(100, 300)
 
         self.popupMenu = None
-        self.actionGroup = None
+        self.propAction = None
 
     def makePopupMenu(self, uiManager):
         self.popupMenu =  uiManager.get_widget("/TilePopup")
+        print(self.popupMenu)
 
     def clearTile(self):
         for child in self.staticBox.get_children():
@@ -42,9 +43,9 @@ class TileBox(Gtk.ScrolledWindow):
             self.annimationBox.remove(child)
 
     def makeActionMenu(self, actionGroup):
-        propAction = Gtk.Action("TileProperties", "Properties", None, None)
-        propAction.connect("activate", self.manageTile)
-        actionGroup.add_action(propAction)
+        self.propAction = Gtk.Action("TileProperties", "Properties", None, None)
+        self.propAction.connect("activate", self.makeWindowProperty)
+        actionGroup.add_action(self.propAction)
 
     def cutTileSet(self, tileSetFile, size=sf.Vector2(32, 32), spacing=sf.Vector2(0, 0)):
         if tileSetFile and path.isfile(tileSetFile):
@@ -139,13 +140,69 @@ class TileBox(Gtk.ScrolledWindow):
             self.annimationBox.pack_start(expander, True, True, 0)
             self.show_all()
 
-    def manageTile(self, action):
-        print(action)
+    def disconnectAll(self):
+        self.propAction.disconnect_by_func(self.makeWindowProperty)
+
+    def connectAll(self, widget, event):
+        self.propAction.connect("activate", self.makeWindowProperty, widget, event)
 
     def pressButtonEvent(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 3:
-                self.popupMenu.popup(None, None, None, None, event.button, event.time)
+                if(widget.get_selected_items()):
+                    self.disconnectAll()
+                    self.connectAll(widget, event)
+                    self.popupMenu.popup(None, None, None, None, event.button, event.time)
+
+    def makeWindowProperty(self, button, iconView, event):
+        widgets = dict()
+        iterTileSelected = iconView.get_model().get_iter(iconView.get_selected_items()[0])
+        tile = iconView.get_model().get_value(iterTileSelected, 0)
+        widgets['tile'] = tile
+
+        window = Gtk.Window(title='Tile Properties')
+        window.set_property('modal', True)
+
+        grid = Gtk.Grid()
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hbox.set_halign(Gtk.Align.END)
+        vgrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
+        vgrid.add(grid)
+        vgrid.add(hbox)
+
+        typeLabel = Gtk.Label("type")
+        nameLabel = Gtk.Label("name")
+        typeEntry= Gtk.Entry()
+        typeEntry.set_text(tile.type)
+        nameEntry = Gtk.Entry()
+        nameEntry.set_text(tile.name)
+
+        grid.attach(typeLabel, 0, 0, 1, 1)
+        grid.attach_next_to(typeEntry, typeLabel, Gtk.PositionType.RIGHT, 2, 1)
+        grid.attach_next_to(nameLabel, typeLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(nameEntry, nameLabel, Gtk.PositionType.RIGHT, 2, 1)
+
+        okButton = Gtk.Button(label="OK")
+        cancelButton = Gtk.Button(label="Cancel")
+
+        hbox.pack_start(okButton, False, False, 0)
+        hbox.pack_start(cancelButton, False, False, 0)
+
+        window.connect("destroy", lambda e, w : w.destroy(), window)
+        okButton.connect('clicked', self.setTileProperty, widgets)
+        cancelButton.connect('clicked', lambda b, w : w.destroy(), window)
+
+        widgets['iconView'] = iconView
+        widgets['nameEntry'] = nameEntry
+        widgets['typeEntry'] = typeEntry
+        window.add(vgrid)
+        window.show_all()
+
+    def setTileProperty(self, button, widgets):
+        widgets['tile'].name = widgets['nameEntry'].get_text()
+        widgets['tile'].type = widgets['typeEntry'].get_text()
+        if 'window' in widgets:
+            widgets['window'].destroy()
             
 class DragIconView(Gtk.IconView):
     def __init__(self, model, numColumn):
@@ -153,6 +210,7 @@ class DragIconView(Gtk.IconView):
         self.numColumn = numColumn
         self.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, [], Gdk.DragAction.COPY)
         self.connect("drag-data-get", self.do_drag_data_get)
+        self.connect("button-press-event", self.buttonPressEvent)
 
         targets = Gtk.TargetList.new([])
         targets.add_image_targets(0, True)
@@ -160,6 +218,15 @@ class DragIconView(Gtk.IconView):
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
         return
+
+    def buttonPressEvent(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 3:
+                path = self.get_path_at_pos(event.x, event.y)
+                if path:
+                    widget.select_path(path)
+                else:
+                    widget.unselect_all()
 
     def getWidgetPosition(self, path):
         return self.get_columns() * self.get_item_row(path) +\
@@ -173,9 +240,6 @@ class DragIconView(Gtk.IconView):
 
     def getIconSubRect(self, path):
         return self.get_model().get_value(self.get_model().get_iter(path), 0).rect
-
-    def manageProperties(self):
-        pass
 
 class StaticDragIconView(DragIconView):
     def __init__(self, model, size, spacing, numColumn):
@@ -218,5 +282,7 @@ class TileIcon(GdkPixbuf.Pixbuf):
     def new(color, tf, deep, sizex, sizey, rect, tileID):
         objet = GdkPixbuf.Pixbuf.new(color, tf, deep, sizex, sizey)
         objet.rect = rect
-        objet.tileID = tileID
+        objet.tileID = tileID #The tile number in the tile file
+        objet.name = "" #The common name for the tile (ground, water, ...)
+        objet.type = ""
         return objet
