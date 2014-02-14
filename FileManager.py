@@ -29,8 +29,9 @@ class FileManager():
         fileName = self._openFile("xml")
         xmlTree = ET.parse(fileName)
         xmlRoot = xmlTree.getroot()
+
+        globalVar.tileWindow.decodeXML(xmlRoot.find('Window'))
         tileBox.decodeXML(xmlRoot.find('Files'), path.dirname(fileName))
-        #globalVar.tileWindow.decodeXML(xmlRoot.find('Window'))
 
     def openFileImage(self):
         return self._openFile('image')
@@ -39,8 +40,10 @@ class FileManager():
         dialog = Gtk.FileChooserDialog("Where to save the map ?", self.parent, \
                 Gtk.FileChooserAction.SAVE, (Gtk.STOCK_SAVE, Gtk.ResponseType.OK, \
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
-        self.xmlFile = self._getFileName(dialog, filt="xml")
-        self.saveFile(tileBox, traceManager)
+        xmlFile = self._getFileName(dialog, filt="xml")
+        if xmlFile:
+            self.xmlFile = xmlFile
+            self.saveFile(tileBox, traceManager)
 
     def saveFile(self, tileBox, traceManager):
         xmlRoot = ET.fromstring('<map></map>')
@@ -48,7 +51,8 @@ class FileManager():
         xmlRoot.append(tileBox.getSaveFileElem())
         xmlRoot.append(traceManager.getSaveFileElem(tileBox))
 
-        with open(self.fileName, 'w') as xmlFile:
+        print(self.xmlFile)
+        with open(self.xmlFile, 'w') as xmlFile:
             xmlFile.write(str(ET.tostring(xmlRoot).decode()))
 
     def setFilter(self, dialog, filt):
