@@ -3,6 +3,7 @@ from os import path
 from copy import copy
 import shutil
 import sfml as sf
+import xml.etree.ElementTree as ET
 
 class TileBox(Gtk.ScrolledWindow):
     textureList = dict()
@@ -24,6 +25,9 @@ class TileBox(Gtk.ScrolledWindow):
         self.annimationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         annimationExpander.add(self.annimationBox)
 
+        self.annimationDict = dict()
+        self.staticList = []
+
         self.box.pack_start(annimationExpander, True, True, 0)
 
         self.add(self.box)
@@ -34,13 +38,15 @@ class TileBox(Gtk.ScrolledWindow):
 
     def makePopupMenu(self, uiManager):
         self.popupMenu =  uiManager.get_widget("/TilePopup")
-        print(self.popupMenu)
 
     def clearTile(self):
         for child in self.staticBox.get_children():
             self.staticBox.remove(child)
         for child in self.annimationBox.get_children():
             self.annimationBox.remove(child)
+        self.staticList = []
+        self.annimationDict = dict()
+        TileBox.textureList = dict()
 
     def makeActionMenu(self, actionGroup):
         self.propAction = Gtk.Action("TileProperties", "Properties", None, None)
@@ -50,7 +56,8 @@ class TileBox(Gtk.ScrolledWindow):
     def cutTileSet(self, tileSetFile, size=sf.Vector2(32, 32), spacing=sf.Vector2(0, 0)):
         if tileSetFile and path.isfile(tileSetFile):
             tileSetFile = path.relpath(path.abspath(tileSetFile), path.abspath(path.dirname(__file__)))
-            shutil.copy(tileSetFile, "Files")
+            if path.dirname(tileSetFile) != "Files":
+                shutil.copy(tileSetFile, "Files")
             fileName = "Files/"+path.basename(tileSetFile)
 
             if fileName in TileBox.textureList:
@@ -84,7 +91,7 @@ class TileBox(Gtk.ScrolledWindow):
                     posY += size.y + spacing.y
                 treeStore.append(None, listPixbuf)
                 tileID = tileID + 1
-            viewIcon = StaticDragIconView(treeStore, size, spacing, self.numColumn)
+            viewIcon = StaticDragIconView(treeStore, size, spacing, self.numColumn, fileName.split('/')[1])
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(fileName)
@@ -92,19 +99,23 @@ class TileBox(Gtk.ScrolledWindow):
 
             expander.add(viewIcon)
             self.staticBox.pack_start(expander, True, True, 0)
+            self.staticList.append(viewIcon)
             self.show_all()
 
     #An annimation have many entity with 4 attributes : position in x and y and size in x and y
     def cutTileAnnimation(self, treeStoreAnnim, annimation, fileName):
         if fileName and path.isfile(fileName):
             fileName = path.relpath(path.abspath(fileName), path.abspath(path.dirname(__file__)))
-            shutil.copy(fileName, "Files")
+            if path.dirname(fileName) != "Files":
+                shutil.copy(fileName, "Files")
             fileName = "Files/"+path.basename(fileName)
 
             if fileName in TileBox.textureList:
                 return
             else:
                 TileBox.textureList[treeStoreAnnim.get_value(annimation, 0)] = sf.Texture.from_file(fileName)
+
+            self.annimationDict[fileName] = []
 
             expander = Gtk.Expander()
             expander.set_label(treeStoreAnnim.get_value(annimation, 0))
@@ -123,20 +134,22 @@ class TileBox(Gtk.ScrolledWindow):
 
                 pixbuf = TileIcon.new(GdkPixbuf.Colorspace.RGB, True, 8, sizeX, sizeY, \
                         sf.Rectangle(sf.Vector2(posX, posY), sf.Vector2(sizeX, sizeY)), \
-                        treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 0))
+                        int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 0)))
 
                 originPixbuf.copy_area(posX, posY, min(sizeX, originPixbuf.get_width() - posX), \
                         min(sizeY, originPixbuf.get_height() - posY), pixbuf, 0, 0)
                 listPixbuf = [pixbuf, posX, posY]
                 treeStore.append(None, listPixbuf)
 
-            viewIcon = DynamicDragIconView(treeStore, self.numColumn)
+            viewIcon = DynamicDragIconView(treeStore, self.numColumn, fileName,\
+                    treeStoreAnnim.get_value(annimation, 0))
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(treeStoreAnnim.get_value(annimation, 0))
             viewIcon.connect("button_press_event", self.pressButtonEvent)
 
             expander.add(viewIcon)
+            self.annimationDict[fileName].append(viewIcon)
             self.annimationBox.pack_start(expander, True, True, 0)
             self.show_all()
 
@@ -203,10 +216,96 @@ class TileBox(Gtk.ScrolledWindow):
         widgets['tile'].type = widgets['typeEntry'].get_text()
         if 'window' in widgets:
             widgets['window'].destroy()
-            
+
+    def getSaveFileElem(self):
+        fileElem = ET.Element('Files')
+
+        for view in self.staticList:
+            dragIconSubElem = ET.SubElement(fileElem, 'Static')
+            dragIconSubElem.set('file', view.fileName)
+            dragIconSubElem.set('tileSize', str(view.size.x)+'x'+str(view.size.y))
+            dragIconSubElem.set('spacing', str(view.spacing.x)+'x'+str(view.spacing.y))
+            tileIter = view.get_model().get_iter_first()
+            while tileIter:
+                tile = view.get_model().get_value(tileIter, 0)
+                tileSubElem = ET.SubElement(dragIconSubElem, 'staticTile')
+                tileSubElem.set('name', tile.name)
+                tileSubElem.set('type', tile.type)
+                tileIter = view.get_model().iter_next(tileIter)
+
+        for viewList in self.annimationDict.values():
+            dragIconSubElem = ET.SubElement(fileElem, 'Dynamic')
+            for view in viewList:
+                dragIconSubElem.set('file', view.fileName)
+                annimationSubElem = ET.SubElement(dragIconSubElem, 'dynamicEntity')
+                annimationSubElem.set('name', view.name)
+                tileIter = view.get_model().get_iter_first()
+                while tileIter:
+                    tile = view.get_model().get_value(tileIter, 0)
+                    tileSubElem = ET.SubElement(annimationSubElem, 'dynamicTile')
+                    tileSubElem.set('name', tile.name)
+                    tileSubElem.set('type', tile.type)
+                    pos = str(tile.rect.position.x)+'x'+str(tile.rect.position.y)
+                    size = str(tile.rect.size.x)+'x'+str(tile.rect.size.y)
+                    tileSubElem.set('pos', pos)
+                    tileSubElem.set('size', size)
+                    tileIter = view.get_model().iter_next(tileIter)
+        return fileElem
+
+    #return the file ID. The number one is the first static file. 1 ID per file
+    def getFileID(self, fileName, style="static"):
+        if style == "static":
+            for i in range(len(self.staticList)):
+                if self.staticList[i].fileName == fileName:
+                    return i
+        else:
+            l = [self.annimationDict.keys()]
+            if l.count(fileName):
+                return len(self.staticList)+l.index(fileName)
+        return None
+
+    def decodeXML(self, element, path):
+        listStaticElement = element.findall('Static')
+        listDynamicElement = element.findall('Dynamic')
+
+        for staticElement in listStaticElement:
+            elemValues = dict()
+            for staticItems in staticElement.items():
+                elemValues[staticItems[0]] = staticItems[1]
+            tileSizeSplit = elemValues['tileSize'].split('x')
+            elemValues['tileSize'] = sf.Vector2(float(tileSizeSplit[0]), float(tileSizeSplit[1]))
+
+            tileSpacingSplit = elemValues['spacing'].split('x')
+            elemValues['spacing'] = sf.Vector2(float(tileSpacingSplit[0]), float(tileSpacingSplit[1]))
+
+            self.cutTileSet(path+'/'+elemValues['file'], elemValues['tileSize'], elemValues['spacing'])
+
+            iterStaticPass = False
+            for treeModelRow, staticTileElement in zip(self.staticList[-1].get_model(),\
+                    staticElement.iter()):
+                #The first staticTileElement iter is a Static Element and not a staticTile Element
+                if iterStaticPass==False:
+                    iterStaticPass = True
+                    continue
+
+                tile = self.staticList[-1].get_model().get_value(\
+                        self.staticList[-1].get_model().get_iter(treeModelRow.path), 0)
+
+                tileValues = dict()
+                for tileItems in staticTileElement.items(): 
+                    tileValues[tileItems[0]] = tileItems[1]
+
+                tile.name = tileValues['name']
+                tile.type = tileValues['type']
+
+            for dynamicElement in listDynamicElement:
+                pass
+
+
 class DragIconView(Gtk.IconView):
-    def __init__(self, model, numColumn):
+    def __init__(self, model, numColumn, fileName):
         Gtk.IconView.__init__(self, model)
+        self.fileName = fileName
         self.numColumn = numColumn
         self.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, [], Gdk.DragAction.COPY)
         self.connect("drag-data-get", self.do_drag_data_get)
@@ -242,8 +341,8 @@ class DragIconView(Gtk.IconView):
         return self.get_model().get_value(self.get_model().get_iter(path), 0).rect
 
 class StaticDragIconView(DragIconView):
-    def __init__(self, model, size, spacing, numColumn):
-        DragIconView.__init__(self, model, numColumn)
+    def __init__(self, model, size, spacing, numColumn, fileName):
+        DragIconView.__init__(self, model, numColumn, fileName)
         self.size = size
         self.spacing = spacing
         self.style = "Static"
@@ -255,15 +354,16 @@ class StaticDragIconView(DragIconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
-                    'name':self.get_name(),\
+                    'fileName':self.fileName, 'name':self.get_name(),\
                     'numColumn':self.numColumn, 'style':self.style,\
                     'subRect':self.get_model().get_value(selected_iter, 0).rect,
                     'tileID':self.get_model().get_value(selected_iter, 0).tileID}
 
 class DynamicDragIconView(DragIconView):
-    def __init__(self, model, numColumn):
-        DragIconView.__init__(self, model, numColumn)
+    def __init__(self, model, numColumn, fileName, name):
+        DragIconView.__init__(self, model, numColumn, fileName)
         self.style = "Dynamic"
+        self.name = name
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
         if time:
@@ -273,7 +373,7 @@ class DynamicDragIconView(DragIconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
-                    'name':self.get_name(),\
+                    'name':self.get_name(), 'fileName':self.fileName,\
                     'numColumn':self.numColumn,\
                     'style':self.style,\
                     'subRect':self.get_model().get_value(selected_iter, 0).rect}

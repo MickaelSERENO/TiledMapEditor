@@ -27,7 +27,7 @@ class SFMLArea(Gtk.DrawingArea):
         targets.add_image_targets(0, True)
 
         self.drag_dest_set_target_list(targets)
-        self.timemoutUpdate = GObject.timeout_add(20, self.draw)
+        self.timemoutUpdate = GObject.timeout_add(100, self.draw)
 
         self.popupFull = None
         self.popupEmpty = None

@@ -432,7 +432,7 @@ class CreateMenu:
 
         addAnnim.connect('clicked', self.addAnniInTree, widgets)
         addEntity.connect('clicked', self.addEntityInTree, widgets)
-        resetEntity.connect('click', self.resetEntity, widgets)
+        resetEntity.connect('clicked', self.resetEntity, widgets)
 
         return vGrid
 
@@ -540,7 +540,7 @@ class CreateMenu:
         args[1].destroy()
 
     def openImage(self, entry, pos, event, fileManager):
-        path = fileManager.openFile("image")
+        path = fileManager.openFileImage()
         if path:
             entry.set_text(path)
 
@@ -548,7 +548,6 @@ class CreateMenu:
         addString = ''
         if widgets['nameEntered'].get_text()[-4:] != ".xml":
             addString = ".xml"
-        open("Files/" + widgets['nameEntered'].get_text() + addString, "w").close()
 
         globalVar.tileWindow.buildSFMLArea(sf.Vector2(\
                 int(widgets["hNumberCases"].get_value()), int(widgets["vNumberCases"].get_value())),\

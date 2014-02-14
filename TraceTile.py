@@ -75,8 +75,9 @@ class StaticTrace(Trace):
         dndDatas = TileBox.dndDatas
         indice = sf.Vector2(\
                 int(x/self.tileSize.x), int(y/self.tileSize.y))
-        self.listStaticTile[indice.x][indice.y]=Tile(self, indice*self.tileSize,\
-                dndDatas['subRect'], TileBox.textureList[dndDatas['name']])
+        self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
+                indice*self.tileSize, dndDatas['subRect'],\
+                TileBox.textureList[dndDatas['name']], dndDatas['fileName'])
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -144,6 +145,8 @@ class DynamicTrace(Trace):
 
     def makeAddTileWindowPrompt(self, x, y):
         dndDatas = TileBox.dndDatas
+        if dndDatas['style'] == "Static":
+            return self.addStaticTile(x, y)
         window = Gtk.Window(title="Annimation")
         window.set_property('modal', True)
 
@@ -190,7 +193,7 @@ class DynamicTrace(Trace):
         hbox.pack_start(cancelButton, False, False, 0)
 
         window.connect("destroy", lambda event, w : w.destroy(), window)
-        okButton.connect('clicked', self.confirmAddTile, widgets)
+        okButton.connect('clicked', self.confirmDynamicTile, widgets)
         cancelButton.connect('clicked', lambda button, w : w.destroy(), window)
 
         cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
@@ -203,22 +206,29 @@ class DynamicTrace(Trace):
         window.add(vgrid)
         window.show_all()
 
-    def confirmAddTile(self, button, widgets):
+    def addStaticTile(self, x, y):
+        dndDatas = TileBox.dndDatas
+        self.listDynamicTile.append(StaticTile(dndDatas['tileID'],\
+                sf.Vector2(x, y), dndDatas['subRect'],\
+                TileBox.textureList[dndDatas['name']], dndDatas['fileName']))
+
+    def confirmDynamicTile(self, button, widgets):
         dndDatas = TileBox.dndDatas
         origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
         self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
                 widgets['timeEntry'].get_value(), origin, widgets['position'],\
-                dndDatas['subRect'], TileBox.textureList[dndDatas['name']]))
+                dndDatas['subRect'], TileBox.textureList[dndDatas['name']], dndDatas['fileName'],\
+                dndDatas['animName']))
         if 'window' in widgets:
             widgets['window'].destroy()
 
-
 class Tile:
-    def __init__(self, tileID, position, subRect, texture):
+    def __init__(self, tileID, position, subRect, texture, fileName):
         self.sprite = sf.Sprite(texture)
         self.sprite.texture_rectangle = subRect
         self.tileID = tileID
         self.sprite.position = position
+        self.fileName = fileName
 
     def update(self):
         globalVar.sfmlArea.render.draw(self.sprite)
@@ -230,13 +240,14 @@ class Tile:
     rect = property(lambda self : self.sprite.global_bounds)
 
 class StaticTile(Tile):
-    def __init__(self, tileID, position, subRect, texture):
-        Tile.__init__(self, tileID, position, subRect, texture)
+    def __init__(self, tileID, position, subRect, texture, fileName):
+        Tile.__init__(self, tileID, position, subRect, texture, fileName)
         self.style = "Static"
 
 class DynamicTile(Tile):
-    def __init__(self, tileID, timeAnnim, origin, position, subRect, texture):
-        Tile.__init__(self, tileID, position, subRect, texture)
+    def __init__(self, tileID, animTime, origin, position, subRect, texture, fileName, animName):
+        Tile.__init__(self, tileID, position, subRect, texture, fileName)
         self.style = "Dynamic"
-        self.timeAnnim = timeAnnim
+        self.animTime = animTime
         self.origin = origin
+        self.animName = animName

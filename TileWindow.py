@@ -10,6 +10,7 @@ from FileManager import FileManager
 from CreateMenu import CreateMenu
 from TileBox import TileBox
 from TraceManager import TraceManager
+import xml.etree.ElementTree as ET
 import sfml as sf
 
 class TileWindow(Gtk.Window):
@@ -64,7 +65,6 @@ class TileWindow(Gtk.Window):
             for child in self.sfmlBox:
                 self.sfmlBox.remove(child)
 
-
         vSlide = Gtk.VScrollbar()
         hSlide = Gtk.HScrollbar()
 
@@ -105,6 +105,7 @@ class TileWindow(Gtk.Window):
 
         saveAction = Gtk.Action("Save", None, None, Gtk.STOCK_SAVE)
         actionGroup.add_action_with_accel(saveAction, None)
+        saveAction.connect("activate", self.manageFile, "save", "xml")
 
         saveAsAction = Gtk.Action("SaveAs", None, None, Gtk.STOCK_SAVE_AS)
         actionGroup.add_action_with_accel(saveAsAction, "<Ctrl><Shift>s")
@@ -150,9 +151,22 @@ class TileWindow(Gtk.Window):
         if action=="open":
             if mime=="image":
                 self.newContents.createNewImage(self.fileManager, self.tileBox)
+            elif mime=="xml":
+                self.fileManager.openFileImage(self.tileBox, self.traceManager)
 
         elif action=="saveAs":
-            print(self.fileManager.saveFile())
+            self.fileManager.saveAsFile(self.tileBox, self.traceManager)
+        elif action=="save":
+            self.fileManager.saveFile(self.tileBox, self.traceManager)
     
     def newFile(self, widget):
         self.newContents.newFile(self.fileManager)
+        self.fileManager.xmlFile = self.get_title()
+
+    def getSaveFileElem(self):
+        windowElem = ET.Element('Window')
+        windowElem.set('numberCases', str(globalVar.sfmlArea.numberCases.x)+'x'+str(globalVar.sfmlArea.numberCases.y))
+        windowElem.set('tileSize', str(globalVar.sfmlArea.sizeCase.x)+'x'+str(globalVar.sfmlArea.sizeCase.y))
+        windowElem.set('title', str(self.get_title()))
+
+        return windowElem

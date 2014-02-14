@@ -1,6 +1,9 @@
 from gi.repository import Gtk, Gdk
 from SFMLArea import *
 import globalVar
+import xml.etree.ElementTree as ET
+import io
+import csv
 
 class TraceManager(Gtk.Box):
     def __init__(self):
@@ -98,3 +101,54 @@ class TraceManager(Gtk.Box):
         self.listStore = Gtk.ListStore(bool, str)
         self.treeView.set_model(self.listStore)
         self.show_all()
+
+    def getSaveFileElem(self, tileBox):
+        listTrace = globalVar.sfmlArea.listTrace
+        traceElem = ET.Element("Trace")
+        for trace in listTrace:
+            if trace.style == "Static":
+                staticTraceElem = ET.SubElement(traceElem, "StaticTrace")
+                staticTraceElem.set('size', str(trace.tileSize.x) + 'x' + str(trace.tileSize.y))
+                for column in trace.listStaticTile:
+                    columnSubElem = ET.SubElement(staticTraceElem, "Column")
+                    columnTileID = io.StringIO()
+                    columnFileID = io.StringIO()
+
+                    columnTileRow = []
+                    columnFileRow = []
+
+                    tileCSV = csv.writer(columnTileID)
+                    fileCSV = csv.writer(columnFileID)
+                    for tile in column:
+                        if tile:
+                            columnTileRow.append(str(tile.tileID))
+                            columnFileRow.append(str(tileBox.getFileID(tile.fileName, "static")))
+                        else:
+                            columnTileRow.append('-1')
+                            columnFileRow.append('-1')
+                    tileCSV.writerow(columnTileRow)
+                    fileCSV.writerow(columnFileRow)
+
+                    columnTileSubElem = ET.SubElement(columnSubElem, "tileID")
+                    columnTileSubElem.set('code', columnTileID.getvalue())
+
+                    columnFileSubElem = ET.SubElement(columnSubElem, "fileID")
+                    columnFileSubElem.set('code', columnFileID.getvalue())
+            else:
+                dynamicTraceElem = ET.SubElement(traceElem, 'DynamicTrace')
+                for tile in trace.listDynamicTile:
+                    if tile.style == "Dynamic":
+                        tileSubElem = ET.SubElement(dynamicTraceElem, "DynamicTile")  
+                        tileSubElem.set('animName', str(tile.animName))
+                        tileSubElem.set('animTime', str(tile.animTime))
+                        tileSubElem.set('origin', str(tile.origin.x)+'x'+str(tile.origin.y))
+                        tileSubElem.set('fileName', str(tileBox.getFileID(tile.fileName, 'dynamic')))
+                        tileSubElem.set('tileID', str(tile.tileID))
+                        tileSubElem.set('position', str(tile.position.x)+'x'+str(tile.position.y))
+                    else:
+                        tileSubElem = ET.SubElement(dynamicTraceElem, "StaticTile")
+                        tileSubElem.set('fileName', str(tileBox.getFileID(tile.fileName, 'static')))
+                        tileSubElem.set('tileID', str(tile.tileID))
+                        tileSubElem.set('position', str(tile.position.x)+'x'+str(tile.position.y))
+
+        return traceElem
