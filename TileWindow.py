@@ -152,7 +152,7 @@ class TileWindow(Gtk.Window):
             if mime=="image":
                 self.newContents.createNewImage(self.fileManager, self.tileBox)
             elif mime=="xml":
-                self.fileManager.openFileImage(self.tileBox, self.traceManager)
+                self.fileManager.openFileXML(self.tileBox, self.traceManager)
 
         elif action=="saveAs":
             self.fileManager.saveAsFile(self.tileBox, self.traceManager)
@@ -161,7 +161,6 @@ class TileWindow(Gtk.Window):
     
     def newFile(self, widget):
         self.newContents.newFile(self.fileManager)
-        self.fileManager.xmlFile = self.get_title()
 
     def getSaveFileElem(self):
         windowElem = ET.Element('Window')
@@ -170,3 +169,17 @@ class TileWindow(Gtk.Window):
         windowElem.set('title', str(self.get_title()))
 
         return windowElem
+
+    def decodeXML(self, windowElement):
+        windowValuesElement = dict()
+        for item in windowElement.items():
+            windowValuesElement[item[0]]=item[1]
+
+        tileSizeSplit = windowValuesElement['tileSize'].split('x')
+        windowValuesElement['tileSize'] = sf.Vector2(int(tileSizeSplit[0]), int(tileSizeSplit[1]))
+
+        numberCasesSplit = windowValuesElement['numberCases'].split('x')
+        windowValuesElement['numberCases'] = sf.Vector2(int(numberCasesSplit[0]), int(numberCasesSplit[1]))
+        self.buildSFMLArea(windowValuesElement['numberCases'], windowValuesElement['tileSize'])
+
+        self.set_title(windowValuesElement['title'])
