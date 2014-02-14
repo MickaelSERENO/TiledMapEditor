@@ -556,6 +556,7 @@ class CreateMenu:
 
         globalVar.sfmlArea.get_toplevel().set_title(\
                 widgets['nameEntered'].get_text().replace(".xml", ""))
+        globalVar.tileWindow.fileManager.xmlFile = 'Files/'+globalVar.tileWindow.get_title()+'.xml'
         window = widgets['window']
         del widgets['window']
         window.destroy()
