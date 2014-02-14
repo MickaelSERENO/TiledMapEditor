@@ -25,7 +25,7 @@ class TileBox(Gtk.ScrolledWindow):
         self.annimationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         annimationExpander.add(self.annimationBox)
 
-        self.annimationDict = dict()
+        self.dynamicDict = dict()
         self.staticList = []
 
         self.box.pack_start(annimationExpander, True, True, 0)
@@ -45,7 +45,7 @@ class TileBox(Gtk.ScrolledWindow):
         for child in self.annimationBox.get_children():
             self.annimationBox.remove(child)
         self.staticList = []
-        self.annimationDict = dict()
+        self.dynamicDict = dict()
         TileBox.textureList = dict()
 
     def makeActionMenu(self, actionGroup):
@@ -115,7 +115,8 @@ class TileBox(Gtk.ScrolledWindow):
             else:
                 TileBox.textureList[treeStoreAnnim.get_value(annimation, 0)] = sf.Texture.from_file(fileName)
 
-            self.annimationDict[fileName] = []
+            if not fileName in self.dynamicDict:
+                self.dynamicDict[fileName] = []
 
             expander = Gtk.Expander()
             expander.set_label(treeStoreAnnim.get_value(annimation, 0))
@@ -126,7 +127,7 @@ class TileBox(Gtk.ScrolledWindow):
             image.set_from_file(fileName)
             originPixbuf = image.get_pixbuf()
 
-            for i in range(treeStore.iter_n_children(annimation)):
+            for i in range(treeStoreAnnim.iter_n_children(annimation)):
                 posX = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 1))
                 posY = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 2))
                 sizeX = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(annimation, i), 3))
@@ -149,7 +150,7 @@ class TileBox(Gtk.ScrolledWindow):
             viewIcon.connect("button_press_event", self.pressButtonEvent)
 
             expander.add(viewIcon)
-            self.annimationDict[fileName].append(viewIcon)
+            self.dynamicDict[fileName].append(viewIcon)
             self.annimationBox.pack_start(expander, True, True, 0)
             self.show_all()
 
@@ -233,9 +234,10 @@ class TileBox(Gtk.ScrolledWindow):
                 tileSubElem.set('type', tile.type)
                 tileIter = view.get_model().iter_next(tileIter)
 
-        for viewList in self.annimationDict.values():
+        for viewList in self.dynamicDict.values():
             dragIconSubElem = ET.SubElement(fileElem, 'Dynamic')
             for view in viewList:
+                print('ok')
                 dragIconSubElem.set('file', view.fileName)
                 annimationSubElem = ET.SubElement(dragIconSubElem, 'dynamicEntity')
                 annimationSubElem.set('name', view.name)
@@ -259,7 +261,7 @@ class TileBox(Gtk.ScrolledWindow):
                 if self.staticList[i].fileName == fileName:
                     return i
         else:
-            l = [self.annimationDict.keys()]
+            l = [self.dynamicDict.keys()]
             if l.count(fileName):
                 return len(self.staticList)+l.index(fileName)
         return None
@@ -298,9 +300,70 @@ class TileBox(Gtk.ScrolledWindow):
                 tile.name = tileValues['name']
                 tile.type = tileValues['type']
 
-            for dynamicElement in listDynamicElement:
-                pass
+        for dynamicElement in listDynamicElement:
+            dynamicValuesElement = dict()
+            tileValueDict = dict()
+            iterAnnimationPassFirst = False
 
+            treeStoreAnnim = Gtk.TreeStore(str, str, str, str, str)
+
+            #collect all items
+            for dynamicItem in dynamicElement.items():
+                dynamicValuesElement[dynamicItem[0]] = dynamicItem[1]
+
+            for annimationEntity in dynamicElement.iter():
+
+                #The first entity is the parent entity and not a child
+                if not iterAnnimationPassFirst:
+                    iterAnnimationPassFirst=True
+                    continue
+
+                annimationValuesEntity = dict()
+                for annimationItem in annimationEntity.items():
+                    annimationValuesEntity[annimationItem[0]] = annimationItem[1]
+
+                tileValueDict[annimationValuesEntity['name']] = []
+
+                parent = treeStoreAnnim.append(None)
+                treeStoreAnnim.set_value(parent, 0, annimationValuesEntity['name'])
+
+                posTileEntity = 0
+                iterTilePassFirst = False
+                for tileEntity in annimationEntity.iter():
+                    if not iterTilePassFirst:
+                        iterTilePassFirst=True
+                        continue
+
+                    tileValuesEntity = dict()
+                    for tileItem in tileEntity.items():
+                        tileValuesEntity[tileItem[0]] = tileItem[1]
+
+                    sizeSplit = tileValuesEntity['size'].split('x')
+                    tileValuesEntity['size'] = sf.Vector2(sizeSplit[0], sizeSplit[1])
+
+                    tilePosSplit = tileValuesEntity['pos'].split('x')
+                    tileValuesEntity['pos'] = sf.Vector2(tilePosSplit[0], tilePosSplit[1])
+
+                    treeStoreAnnim.insert_with_values(parent, -1, [0, 1, 2, 3, 4], \
+                            [str(posTileEntity), tileValuesEntity['pos'].x, tileValuesEntity['pos'].y, \
+                            tileValuesEntity['size'].x, tileValuesEntity['size'].y])
+
+                    tileValueDict[annimationValuesEntity['name']].append(tileValuesEntity)
+
+            for i in range(len(treeStoreAnnim)):
+                if treeStoreAnnim.iter_n_children(treeStoreAnnim.get_iter(i)) > 0:
+                    self.cutTileAnnimation(treeStoreAnnim, treeStoreAnnim.get_iter(i),\
+                            dynamicValuesElement['file'])
+
+            currentDynamicList = self.dynamicDict[dynamicValuesElement['file']]
+            for iconView in currentDynamicList:
+                for treeModelRow, tileDict in zip(iconView.get_model(), \
+                        tileValueDict[iconView.get_name()]):
+                    tile = iconView.get_model().get_value(\
+                            iconView.get_model().get_iter(treeModelRow.path), 0)
+
+                    tile.name = tileDict['name']
+                    tile.type = tileDict['type']
 
 class DragIconView(Gtk.IconView):
     def __init__(self, model, numColumn, fileName):
