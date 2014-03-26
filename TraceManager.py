@@ -142,7 +142,7 @@ class TraceManager(Gtk.Box):
                         tileSubElem.set('animName', str(tile.animName))
                         tileSubElem.set('animTime', str(tile.animTime))
                         tileSubElem.set('origin', str(tile.origin.x)+'x'+str(tile.origin.y))
-                        tileSubElem.set('fileName', str(tileBox.getFileID(tile.fileName, 'dynamic')))
+                        tileSubElem.set('fileID', str(tileBox.getFileID(tile.fileName, 'dynamic')))
                         tileSubElem.set('tileID', str(tile.tileID))
                         tileSubElem.set('position', str(tile.position.x)+'x'+str(tile.position.y))
                     else:

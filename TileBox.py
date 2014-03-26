@@ -113,7 +113,7 @@ class TileBox(Gtk.ScrolledWindow):
             if fileName in TileBox.textureList:
                 return
             else:
-                TileBox.textureList[treeStoreAnnim.get_value(annimation, 0)] = sf.Texture.from_file(fileName)
+                TileBox.textureList[fileName] = sf.Texture.from_file(fileName)
 
             if not fileName in self.dynamicDict:
                 self.dynamicDict[fileName] = []
@@ -261,7 +261,7 @@ class TileBox(Gtk.ScrolledWindow):
                 if self.staticList[i].fileName == fileName:
                     return i
         else:
-            l = [self.dynamicDict.keys()]
+            l = list(self.dynamicDict.keys())
             if l.count(fileName):
                 return len(self.staticList)+l.index(fileName)
         return None
@@ -436,7 +436,7 @@ class DynamicDragIconView(DragIconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
-                    'name':self.get_name(), 'fileName':self.fileName,\
+                    'animName':self.get_name(), 'fileName':self.fileName,\
                     'numColumn':self.numColumn,\
                     'style':self.style,\
                     'subRect':self.get_model().get_value(selected_iter, 0).rect}

@@ -215,9 +215,10 @@ class DynamicTrace(Trace):
     def confirmDynamicTile(self, button, widgets):
         dndDatas = TileBox.dndDatas
         origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
+        print(dndDatas['fileName'])
         self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
                 widgets['timeEntry'].get_value(), origin, widgets['position'],\
-                dndDatas['subRect'], TileBox.textureList[dndDatas['name']], dndDatas['fileName'],\
+                dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\
                 dndDatas['animName']))
         if 'window' in widgets:
             widgets['window'].destroy()
