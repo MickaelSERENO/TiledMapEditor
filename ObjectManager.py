@@ -39,7 +39,7 @@ class ObjectManager(Gtk.Box):
 
         typeComboBox = Gtk.ComboBoxText.new_with_entry()
         for t in self.typeList:
-            typeModel.append(str(t))
+            typeComboBox.append_text(t)
 
         tileAdjustmentX = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
         tileAdjustmentY = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
@@ -107,12 +107,6 @@ class ObjectManager(Gtk.Box):
         accelGroup = Gtk.AccelGroup()
         window.add_accel_group(accelGroup)
 
-        typeTreeIter = widgets['typeComboBox'].get_active_iter()
-        if typeTreeIter:
-            t = widgets['typeModel'][typeTreeIter][0]
-            if not t in self.typeList:
-                self.typeList.append(t)
-
         tileSize = sf.Vector2(int(widgets['tileSizeX'].get_value()),\
                 int(widgets['tileSizeY'].get_value()))
         caseSize = sf.Vector2(int(widgets['caseSizeX'].get_value()),\
@@ -179,17 +173,19 @@ class ObjectManager(Gtk.Box):
         if not typeName in self.expanderDict.keys():
             self.expanderDict[typeName] = Gtk.Expander()
             self.expanderDict[typeName].set_label(typeName)
-            treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf)
-            viewIcon = ObjectDragIconView(treeStore, self.numColumn, title, typeName)
+            treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf, str)
+            viewIcon = ObjectDragIconView(treeStore, self.numColumn, typeName)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(title)
             viewIcon.set_columns(self.numColumn)
             self.expanderDict[typeName].add(viewIcon)
+            self.typeList.append(typeName)
 
         model = self.expanderDict[typeName].get_child().get_model()
-        image = render.texture.to_image()
+        ObjectManager.objectTexture[title] = render.texture.copy()
+        image = ObjectManager.objectTexture[title].to_image()
         pix = ObjectTileIcon.new(image.pixels.data, image.width, image.height, title)
-        model.append(None, [pix])
+        model.append(None, [pix, title])
         self.expanderBox.pack_start(self.expanderDict[typeName], False, False, 0)
 
         self.get_toplevel().show_all()
@@ -197,7 +193,7 @@ class ObjectManager(Gtk.Box):
         widgets['windowMakeObject'].destroy()
         widgets['widgetsProperties']['window'].destroy()
 
-        ObjectManager.objectTexture[title] = render.texture.copy()
+        print(title)
 
     def quitWindow(self, button, window):
         window.destroy()
@@ -212,10 +208,9 @@ class ObjectTileIcon(GdkPixbuf.Pixbuf):
         return objet
 
 class ObjectDragIconView(DragIconView):
-    def __init__(self, model, numColumn, name, typeName):
-        DragIconView.__init__(self, model, numColumn, name)
+    def __init__(self, model, numColumn, typeName):
+        DragIconView.__init__(self, model, numColumn, typeName)
         self.style = "Object"
-        self.name = name
         self.typeName = typeName
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
@@ -225,6 +220,6 @@ class ObjectDragIconView(DragIconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'from':'ObjectManager',\
-                    'name':self.name,\
+                    'name':self.get_model().get_value(selected_iter, 1),\
                     'numColumn':self.numColumn, 'style':self.style,\
-                    'objectTexture':ObjectManager.objectTexture[self.name]}
+                    'objectTexture':ObjectManager.objectTexture[self.get_model().get_value(selected_iter, 1)]}
