@@ -416,7 +416,7 @@ class StaticDragIconView(DragIconView):
             selected_iter = self.get_model().get_iter(selected_path)
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
-            TileBox.dndDatas = {'spacing':self.spacing, 'size':self.size, \
+            TileBox.dndDatas = {'from':'TileBox', 'spacing':self.spacing, 'size':self.size, \
                     'fileName':self.fileName, 'name':self.get_name(),\
                     'numColumn':self.numColumn, 'style':self.style,\
                     'subRect':self.get_model().get_value(selected_iter, 0).rect,
@@ -435,7 +435,8 @@ class DynamicDragIconView(DragIconView):
             selected_iter = self.get_model().get_iter(selected_path)
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
-            TileBox.dndDatas = {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
+            TileBox.dndDatas = {'from':'TileBox',\
+                    'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
                     'animName':self.get_name(), 'fileName':self.fileName,\
                     'numColumn':self.numColumn,\
                     'style':self.style,\

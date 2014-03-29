@@ -29,17 +29,17 @@ class CreateMenu:
 
         xLabel = Gtk.Label("x")
         spinTileLeft = Gtk.SpinButton()
-        adjustment1 = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        adjustment1 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
         spinTileLeft.set_adjustment(adjustment1)
-        adjustment2 = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        adjustment2 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
         spinTileRight = Gtk.SpinButton()
         spinTileRight.set_adjustment(adjustment2)
 
         xBisLabel = Gtk.Label("x")
         spinCasesLeft = Gtk.SpinButton()
-        adjustment3 = Gtk.Adjustment(32, 0, 10000, 1, 10, 0)
+        adjustment3 = Gtk.Adjustment(32, 0, 100000, 1, 10, 0)
         spinCasesLeft.set_adjustment(adjustment3)
-        adjustment4 = Gtk.Adjustment(32, 0, 10000, 1, 10, 0)
+        adjustment4 = Gtk.Adjustment(32, 0, 100000, 1, 10, 0)
         spinCasesRight = Gtk.SpinButton()
         spinCasesRight.set_adjustment(adjustment4)
 
@@ -119,17 +119,17 @@ class CreateMenu:
 
         xLabel = Gtk.Label("x")
         spinTileLeft = Gtk.SpinButton()
-        adjustment1 = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        adjustment1 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
         spinTileLeft.set_adjustment(adjustment1)
-        adjustment2 = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        adjustment2 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
         spinTileRight = Gtk.SpinButton()
         spinTileRight.set_adjustment(adjustment2)
 
         xBisLabel = Gtk.Label("x")
         spinSpaceLeft = Gtk.SpinButton()
-        adjustment3 = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        adjustment3 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
         spinSpaceLeft.set_adjustment(adjustment3)
-        adjustment4 = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        adjustment4 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
         spinSpaceRight = Gtk.SpinButton()
         spinSpaceRight.set_adjustment(adjustment4)
 

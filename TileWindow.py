@@ -10,6 +10,7 @@ from FileManager import FileManager
 from CreateMenu import CreateMenu
 from TileBox import TileBox
 from TraceManager import TraceManager
+from ObjectManager import *
 import xml.etree.ElementTree as ET
 import sfml as sf
 
@@ -20,8 +21,14 @@ class TileWindow(Gtk.Window):
         self.newContents = CreateMenu(self)
         self.tileBox = TileBox()
         self.traceManager = TraceManager()
+        self.objectManager = ObjectManager()
         self.sfmlTilePanned = Gtk.Paned()
         self.sfmlTilePanned.pack1(self.tileBox)
+
+        self.toolPanned = Gtk.Paned(orientation = Gtk.Orientation.VERTICAL)
+        self.toolPanned.pack1(self.traceManager)
+        self.toolPanned.add2(self.objectManager)
+        self.toolPanned.set_size_request(200, 600)
 
         self.sfmlBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.sfmlTilePanned.add2(self.sfmlBox)
@@ -31,7 +38,7 @@ class TileWindow(Gtk.Window):
 
         panedTraceManager = Gtk.Paned()
         panedTraceManager.add1(self.sfmlTilePanned)
-        panedTraceManager.pack2(self.traceManager, False, True)
+        panedTraceManager.pack2(self.toolPanned, False, True)
         self.set_default_size(800, 600)
 
         self.actionGroup = Gtk.ActionGroup("Actions")
@@ -122,6 +129,10 @@ class TileWindow(Gtk.Window):
         newImageAction = Gtk.Action("NewImage", "New _Image", None, None)
         actionGroup.add_action_with_accel(newImageAction, "<Ctrl><Shift>i")
         newImageAction.connect("activate", self.manageFile, "open", "image")
+
+        newObjectAction = Gtk.Action("NewObject", "New _Object", None, None)
+        actionGroup.add_action_with_accel(newObjectAction, "<Ctrl><Shift>o")
+        newObjectAction.connect("activate", self.objectManager.promptAddObject)
 
         changeSizeAction = Gtk.Action("ChangeSize", "Chan_ge size", None, None)
 

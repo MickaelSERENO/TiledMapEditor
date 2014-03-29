@@ -224,15 +224,18 @@ class DynamicTrace(Trace):
             widgets['window'].destroy()
 
 class Tile:
-    def __init__(self, tileID, position, subRect, texture, fileName):
+    def __init__(self, tileID, position, subRect, texture, fileName, madeByObject=False, \
+            sfmlRenderer=globalVar.sfmlArea):
         self.sprite = sf.Sprite(texture)
         self.sprite.texture_rectangle = subRect
         self.tileID = tileID
         self.sprite.position = position
         self.fileName = fileName
+        self.madeByObject = madeByObject
+        self.sfmlRenderer = sfmlRenderer
 
     def update(self):
-        globalVar.sfmlArea.render.draw(self.sprite)
+        self.sfmlRenderer.render.draw(self.sprite)
 
     def setPosition(self, position):
         self.sprite.position = position
@@ -241,8 +244,10 @@ class Tile:
     rect = property(lambda self : self.sprite.global_bounds)
 
 class StaticTile(Tile):
-    def __init__(self, tileID, position, subRect, texture, fileName):
-        Tile.__init__(self, tileID, position, subRect, texture, fileName)
+    def __init__(self, tileID, position, subRect, texture, fileName,\
+            madeByObject=False, sfmlRenderer=globalVar.sfmlArea):
+        Tile.__init__(self, tileID, position, subRect, texture, fileName, \
+                madeByObject, sfmlRenderer)
         self.style = "Static"
 
 class DynamicTile(Tile):
@@ -252,3 +257,24 @@ class DynamicTile(Tile):
         self.animTime = animTime
         self.origin = origin
         self.animName = animName
+
+class ObjectTile():
+    def __init__(self, texture, tileList, sfmlRenderer):
+        self.tileList = list()
+        for i in range(len(tileList)):
+            self.tileList.append(list())
+            for j in range(len(tileList[0])):
+                self.tileList[-1].append(tileList[i][j])
+
+        self.texture = texture
+        self.sprite = sf.Sprite(texture)
+        self.sfmlRenderer = sfmlRenderer
+
+    def update(self):
+        self.sfmlRenderer.render.draw(self.sprite)
+
+    def setPosition(self, position):
+        self.sprite.position = position
+
+    position = property(lambda self : self.sprite.position, setPosition)
+    rect = property(lambda self : self.sprite.global_bounds)

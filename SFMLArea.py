@@ -1,6 +1,7 @@
 from gi.repository import Gtk, Gdk, GObject
 import sfml as sf
 from TileBox import TileBox
+from TraceTile import *
 from copy import copy
 from TraceTile import StaticTrace, Tile, DynamicTrace
 import globalVar
@@ -27,7 +28,7 @@ class SFMLArea(Gtk.DrawingArea):
         targets.add_image_targets(0, True)
 
         self.drag_dest_set_target_list(targets)
-        self.timemoutUpdate = GObject.timeout_add(100, self.draw)
+        self.timeoutUpdate = GObject.timeout_add(100, self.draw)
 
         self.popupFull = None
         self.popupEmpty = None
@@ -176,3 +177,94 @@ class SFMLArea(Gtk.DrawingArea):
             self.listTrace[-1].initStaticList(self.size)
         else:
             self.listTrace.append(DynamicTrace())
+
+class SFMLMakeObject(Gtk.DrawingArea):
+    def __init__(self, tileSize, numberCase, nameObject):
+        Gtk.DrawingArea.__init__(self)
+        self.tileSize = tileSize
+        self.numberCase = numberCase
+        self.render = sf.HandledWindow()
+        self.size = tileSize*numberCase
+        self.listTile = list()
+        self.nameObject = nameObject
+
+        for i in range(numberCase.x):
+            self.listTile.append(list())
+            for j in range(numberCase.y):
+                self.listTile[-1].append(None)
+
+        self.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+        targets = Gtk.TargetList.new([])
+        targets.add_image_targets(0, True)
+
+        self.drag_dest_set_target_list(targets)
+        self.timeoutUpdate = GObject.timeout_add(100, self.update)
+
+        self.set_size_request(self.size.x, self.size.y)
+
+    def update(self):
+        self.render.empty_event_loop()
+        self.render.clear()
+        for tileList in self.listTile:
+            for tile in tileList:
+                if tile:
+                    tile.update()
+        self.drawQuad()
+        self.render.display()
+        return True
+
+    def do_drag_data_received(self, context, x, y, selection_data, info, time=None):
+        pos = self.render.map_pixel_to_coords(sf.Vector2(x, y), self.render.view)
+        dndDatas = TileBox.dndDatas
+        indice = sf.Vector2(\
+                int(pos.x/self.tileSize.x), int(pos.y/self.tileSize.y))
+
+        self.listTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
+                indice*self.tileSize, dndDatas['subRect'],\
+                TileBox.textureList[dndDatas['name']], dndDatas['fileName'], True, self)
+
+    def drawQuad(self):
+        position = sf.Vector2(0, 0)
+        size = self.size
+
+        posX = max(self.tileSize.x * int(position.x/self.tileSize.x), 0)
+        posY = max(self.tileSize.y * int(position.y/self.tileSize.y), 0)
+
+        lineX = sf.VertexArray(sf.PrimitiveType.LINES, 2)
+        lineY = sf.VertexArray(sf.PrimitiveType.LINES, 2)
+        lineX[0].color = sf.Color.WHITE
+        lineX[1].color = sf.Color.WHITE
+        lineX[0].position = sf.Vector2(posX, max(position.y, 0))
+        lineX[1].position = sf.Vector2(posX, min(position.y+size.y, self.size.y))
+
+        while lineX[0].position.x < position.x + size.x and not lineX[0].position.x > self.size.x:
+            self.render.draw(lineX)
+            lineX[0].position += sf.Vector2(self.tileSize.x, 0)
+            lineX[1].position += sf.Vector2(self.tileSize.x, 0)
+
+        lineY[0].color = sf.Color.WHITE
+        lineY[1].color = sf.Color.WHITE
+        lineY[0].position = sf.Vector2(max(position.x, 0), posY)
+        lineY[1].position = sf.Vector2(min(position.x+size.x, self.size.x), posY)
+
+        while lineY[0].position.y < position.y + size.y and not lineY[0].position.y > self.size.y:
+            self.render.draw(lineY)
+            lineY[0].position += sf.Vector2(0, self.tileSize.y)
+            lineY[1].position += sf.Vector2(0, self.tileSize.y)
+
+    def do_size_allocate(self, allocation):
+        allocation.width = min(allocation.width, self.size.x)
+        allocation.height = min(allocation.height, self.size.y)
+        if not 0 in self.render.size:
+            self.checkViewSize()
+        else:
+            alloc = sf.Vector2(allocation.width, allocation.height)
+            self.render.view.size = alloc
+            self.render.view.center = alloc/2
+        self.render.size = sf.Vector2(allocation.width, allocation.height)
+        Gtk.DrawingArea.do_size_allocate(self, allocation)
+
+    def checkViewSize(self):
+        if self.render.view.size.x > self.size.x or self.render.view.size.y > self.size.y:
+            self.render.view.zoom(min(self.size.x / self.render.view.size.x,\
+                    self.size.y / self.render.view.size.y))

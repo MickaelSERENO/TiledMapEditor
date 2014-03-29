@@ -11,6 +11,7 @@
 		<menu action="EditionMenu">
 			<menuitem action="NewTrace"/>
 			<menuitem action="NewImage"/>
+			<menuitem action="NewObject"/>
 		</menu>
 
 		<menu action="ToolsMenu">
