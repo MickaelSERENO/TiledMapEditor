@@ -88,10 +88,24 @@ class StaticTrace(Trace):
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
-                self.tileMoving = self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)]
+                if len(self.listStaticTile):
+                    b = False
+                    for i in range(len(self.listStaticTile)):
+                        for j in range(len(self.listStaticTile[0])):
+                            if self.listStaticTile[i][j]:
+                                if functions.isMouseInRect(sf.Vector2(event.x, event.y),\
+                                        self.listStaticTile[i][j].rect):
+                                    self.tileMoving = self.listStaticTile[i][j]
+                                    self.indiceTile = sf.Vector2(i, j)
+                                    self.posMoving = sf.Vector2(event.x, event.y) - self.tileMoving.position
+                                    b=True
+                                    break
+                        if b:
+                            break
+
                 if self.tileMoving: 
                     self.indiceTile = sf.Vector2(int(event.x / self.tileSize.x), int(event.y / self.tileSize.y))
-                    self.posMoving = sf.Vector2(event.x, event.y) - self.indiceTile * self.tileSize
+                    self.posMoving = sf.Vector2(event.x, event.y) - self.tileMoving.position
 
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if self.tileMoving:
