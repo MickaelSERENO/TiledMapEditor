@@ -9,9 +9,8 @@ if platform.system() == "Linux":
 elif platform.system() == "Windows":
     from gi.repository import GdkWin32
 
-objectTexture = dict()
-
 class ObjectManager(Gtk.Box):
+    objectTexture = dict()
     def __init__(self):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
         self.objectDict = dict()
@@ -175,13 +174,13 @@ class ObjectManager(Gtk.Box):
 
         render.display()
         self.objectDict[title] = \
-                ObjectTile(render.texture, widgets['sfmlMakeObject'].listTile, widgets['sfmlMakeObject'])
+                MakedObjectTile(render.texture, widgets['sfmlMakeObject'].listTile, widgets['sfmlMakeObject'])
 
         if not typeName in self.expanderDict.keys():
             self.expanderDict[typeName] = Gtk.Expander()
             self.expanderDict[typeName].set_label(typeName)
             treeStore = Gtk.TreeStore(GdkPixbuf.Pixbuf)
-            viewIcon = DragIconView(treeStore, self.numColumn, title)
+            viewIcon = ObjectDragIconView(treeStore, self.numColumn, title, typeName)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(title)
             viewIcon.set_columns(self.numColumn)
@@ -198,7 +197,7 @@ class ObjectManager(Gtk.Box):
         widgets['windowMakeObject'].destroy()
         widgets['widgetsProperties']['window'].destroy()
 
-        objectTexture[name] = render.texture.copy()
+        ObjectManager.objectTexture[title] = render.texture.copy()
 
     def quitWindow(self, button, window):
         window.destroy()
@@ -213,10 +212,8 @@ class ObjectTileIcon(GdkPixbuf.Pixbuf):
         return objet
 
 class ObjectDragIconView(DragIconView):
-    def __init__(self, model, numColumn, fileName, typeName):
-        DragIconView.__init__(self, model, numColumn, fileName)
-        self.size = size
-        self.spacing = spacing
+    def __init__(self, model, numColumn, name, typeName):
+        DragIconView.__init__(self, model, numColumn, name)
         self.style = "Object"
         self.name = name
         self.typeName = typeName
@@ -228,6 +225,6 @@ class ObjectDragIconView(DragIconView):
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
             TileBox.dndDatas = {'from':'ObjectManager',\
-                    'typeName':self.typeName, 'name':self.name,\
+                    'name':self.name,\
                     'numColumn':self.numColumn, 'style':self.style,\
-                    'objectTexture':objectTexture[self.name]}
+                    'objectTexture':ObjectManager.objectTexture[self.name]}

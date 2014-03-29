@@ -75,9 +75,15 @@ class StaticTrace(Trace):
         dndDatas = TileBox.dndDatas
         indice = sf.Vector2(\
                 int(x/self.tileSize.x), int(y/self.tileSize.y))
-        self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
-                indice*self.tileSize, dndDatas['subRect'],\
-                TileBox.textureList[dndDatas['name']], dndDatas['fileName'])
+
+        if dndDatas['style']=='Static':
+            self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
+                    indice*self.tileSize, dndDatas['subRect'],\
+                    TileBox.textureList[dndDatas['name']], dndDatas['fileName'])
+
+        elif dndDatas['style'] == 'Object':
+            self.listStaticTile[indice.x][indice.y]=ObjectTile(dndDatas['objectTexture'],\
+                    indice*self.tileSize, dndDatas['name'])
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -145,7 +151,7 @@ class DynamicTrace(Trace):
 
     def makeAddTileWindowPrompt(self, x, y):
         dndDatas = TileBox.dndDatas
-        if dndDatas['style'] == "Static":
+        if dndDatas['style'] == "Static" or dndDatas['style']=='Object':
             return self.addStaticTile(x, y)
         window = Gtk.Window(title="Annimation")
         window.set_property('modal', True)
@@ -208,9 +214,14 @@ class DynamicTrace(Trace):
 
     def addStaticTile(self, x, y):
         dndDatas = TileBox.dndDatas
-        self.listDynamicTile.append(StaticTile(dndDatas['tileID'],\
-                sf.Vector2(x, y), dndDatas['subRect'],\
-                TileBox.textureList[dndDatas['name']], dndDatas['fileName']))
+        if dndDatas == 'Static':
+            self.listDynamicTile.append(StaticTile(dndDatas['tileID'],\
+                    sf.Vector2(x, y), dndDatas['subRect'],\
+                    TileBox.textureList[dndDatas['name']], dndDatas['fileName']))
+        elif dndDatas == 'Object':
+            self.listDynamicTile.append(ObjectTile(dndDatas['objectTexture'],\
+                    sf.Vector2(x, y), dndDatas['name']))
+
 
     def confirmDynamicTile(self, button, widgets):
         dndDatas = TileBox.dndDatas
@@ -225,14 +236,17 @@ class DynamicTrace(Trace):
 
 class Tile:
     def __init__(self, tileID, position, subRect, texture, fileName, madeByObject=False, \
-            sfmlRenderer=globalVar.sfmlArea):
+            sfmlRenderer='sfmlArea'):
         self.sprite = sf.Sprite(texture)
         self.sprite.texture_rectangle = subRect
         self.tileID = tileID
         self.sprite.position = position
         self.fileName = fileName
         self.madeByObject = madeByObject
-        self.sfmlRenderer = sfmlRenderer
+        if sfmlRenderer == 'sfmlArea':
+            self.sfmlRenderer = globalVar.sfmlArea
+        else:
+            self.sfmlRenderer = sfmlRenderer
 
     def update(self):
         self.sfmlRenderer.render.draw(self.sprite)
@@ -245,20 +259,40 @@ class Tile:
 
 class StaticTile(Tile):
     def __init__(self, tileID, position, subRect, texture, fileName,\
-            madeByObject=False, sfmlRenderer=globalVar.sfmlArea):
+            madeByObject=False, sfmlRenderer='sfmlArea'):
         Tile.__init__(self, tileID, position, subRect, texture, fileName, \
                 madeByObject, sfmlRenderer)
         self.style = "Static"
 
 class DynamicTile(Tile):
-    def __init__(self, tileID, animTime, origin, position, subRect, texture, fileName, animName):
-        Tile.__init__(self, tileID, position, subRect, texture, fileName)
+    def __init__(self, tileID, animTime, origin, position, subRect, texture, fileName, animName,\
+            madeByObject=False, sfmlRenderer='sfmlArea'):
+        Tile.__init__(self, tileID, position, subRect, texture, fileName, madeByObject, sfmlRenderer)
         self.style = "Dynamic"
         self.animTime = animTime
         self.origin = origin
         self.animName = animName
 
 class ObjectTile():
+    def __init__(self, texture, position, name, sfmlRenderer = "sfmlArea"):
+        self.name = name
+        self.sprite = sf.Sprite(texture)
+        if sfmlRenderer == 'sfmlArea':
+            self.sfmlRenderer = globalVar.sfmlArea
+        else:
+            self.sfmlRenderer = sfmlRenderer
+        self.position = position
+
+    def update(self):
+        self.sfmlRenderer.render.draw(self.sprite)
+
+    def setPosition(self, position):
+        self.sprite.position = position
+
+    position = property(lambda self : self.sprite.position, setPosition)
+    rect = property(lambda self : self.sprite.global_bounds)
+
+class MakedObjectTile():
     def __init__(self, texture, tileList, sfmlRenderer):
         self.tileList = list()
         for i in range(len(tileList)):
