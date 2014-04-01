@@ -73,14 +73,19 @@ class StaticTrace(Trace):
             lineY[0].position += sf.Vector2(0, self.tileSize.y)
             lineY[1].position += sf.Vector2(0, self.tileSize.y)
 
-    def addTile(self, x, y):
+    def addTile(self, x, y, fromDnd = True):
         dndDatas = TileBox.dndDatas
         if not dndDatas:
+            return
+
+        if not fromDnd and globalVar.sfmlArea.mode != "Print":
             return
 
         indice = sf.Vector2(\
                 int(x/self.tileSize.x), int(y/self.tileSize.y))
 
+        if not(len(self.listStaticTile) > indice.x and len(self.listStaticTile[indice.x]) > indice.y):
+            return
         if dndDatas['style']=='Static':
             self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
                     indice*self.tileSize, dndDatas['subRect'],\
@@ -94,7 +99,7 @@ class StaticTrace(Trace):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
                 self.leftMousePress = True
-                if len(self.listStaticTile) and not self.controlKey:
+                if len(self.listStaticTile) and not self.controlKey and globalVar.sfmlArea.mode == "Print":
                     b = False
                     for i in range(len(self.listStaticTile)):
                         for j in range(len(self.listStaticTile[0])):
@@ -116,6 +121,9 @@ class StaticTrace(Trace):
                 if self.controlKey and self.leftMousePress:
                     self.addTile(event.x, event.y)
 
+                if globalVar.sfmlArea.mode == "Eraser":
+                    self.removeTile(event.x, event.y)
+
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if event.button == 1:
                 self.leftMousePress = False
@@ -135,8 +143,12 @@ class StaticTrace(Trace):
                 self.controlKey = False
 
         if event.type == Gdk.EventType.MOTION_NOTIFY:
-            if self.controlKey and self.leftMousePress:
+            if self.leftMousePress and globalVar.sfmlArea.mode == "Eraser":
+                self.removeTile(event.x, event.y)
+
+            elif self.controlKey and self.leftMousePress:
                 self.addTile(event.x, event.y)
+
         Trace.updateEventTile(self, event)
 
     def update(self):
@@ -153,6 +165,13 @@ class StaticTrace(Trace):
             for x in self.listStaticTile:
                 for y in range(len(x), int(size.y/self.tileSize.y)):
                     x.append(None)
+
+    def removeTile(self, x, y):
+        indice = sf.Vector2(\
+                int(x/self.tileSize.x), int(y/self.tileSize.y))
+        if len(self.listStaticTile) > indice.x and len(self.listStaticTile[indice.x]) > indice.y:
+            self.listStaticTile[indice.x][indice.y] = None
+
 
 class DynamicTrace(Trace):
     def __init__(self):

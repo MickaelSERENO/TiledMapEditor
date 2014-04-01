@@ -35,6 +35,7 @@ class SFMLArea(Gtk.DrawingArea):
         self.popupEmpty = None
         self.setSlideProperties()
         self.listTrace = list()
+        self.mode = None
 
     def setSlideProperties(self):
         self.vslide.connect("value-changed", self.moveView, "vertical")
@@ -50,6 +51,9 @@ class SFMLArea(Gtk.DrawingArea):
         self.render.view.size = copy(self.render.size)
         self.updateSlideValues()
         self.get_toplevel().show_all()
+
+    def setMode(self, mode):
+        self.mode = mode
 
     def updateSlideValues(self):
         self.vslide.set_adjustment(Gtk.Adjustment(self.render.view.center.y - self.render.view.size.y/2,\

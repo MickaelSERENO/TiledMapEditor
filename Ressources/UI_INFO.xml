@@ -26,6 +26,9 @@
 		<separator/>
 		<toolitem action="Zoom+"/>
 		<toolitem action="Zoom-"/>
+		<separator/>
+		<toolitem action="Print"/>
+		<toolitem action="Eraser"/>
 	</toolbar>
 
 	<popup name="SFMLEmptyCase">

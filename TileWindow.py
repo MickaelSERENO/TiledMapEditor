@@ -17,6 +17,8 @@ import sfml as sf
 class TileWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="TileMapEditor")
+        self.iconTheme = Gtk.IconTheme.get_default()
+        self.iconTheme.append_search_path("Ressources/Icons")
         self.fileManager = FileManager(self)
         self.newContents = CreateMenu(self)
         self.tileBox = TileBox()
@@ -65,6 +67,7 @@ class TileWindow(Gtk.Window):
 
         self.show_all()
 
+
     def buildSFMLArea(self, numberCase, size):
         if globalVar.sfmlArea:
             self.traceManager.clearTrace()
@@ -97,6 +100,10 @@ class TileWindow(Gtk.Window):
             globalVar.sfmlArea.render.create(GdkWin32.Win32Window.get_handle(globalVar.sfmlArea.get_window()))
         self.zoomPlus.connect("activate", globalVar.sfmlArea.zoom, "in")
         self.zoomOut.connect("activate", globalVar.sfmlArea.zoom, "out")
+        for mode in ["Print", "Eraser"]:
+            if self.actionGroup.get_action(mode).get_active():
+                globalVar.sfmlArea.mode = mode
+                break
 
     def makeFileMenuAction(self, actionGroup):
         fileMenuAction = Gtk.Action("FileMenu", "_File", None, None)
@@ -147,6 +154,12 @@ class TileWindow(Gtk.Window):
         self.zoomOut = Gtk.Action("Zoom-", None, None, Gtk.STOCK_ZOOM_OUT)
         actionGroup.add_action_with_accel(self.zoomOut, None)
 
+        actionGroup.add_radio_actions([("Print", None, None, "p", None, 0), \
+                ("Eraser", None, None, "e", None, 0)], "active", self.eraserManager)
+
+        actionGroup.get_action("Print").set_icon_name("pencil")
+        actionGroup.get_action("Eraser").set_icon_name("eraser")
+
     def makeSFMLMenuAction(self, actionGroup):
         delCase = Gtk.Action("DelCase", "Delete", None, None)
         actionGroup.add_action(delCase)
@@ -194,3 +207,7 @@ class TileWindow(Gtk.Window):
         self.buildSFMLArea(windowValuesElement['numberCases'], windowValuesElement['tileSize'])
 
         self.set_title(windowValuesElement['title'])
+
+    def eraserManager(self, radioAction, current):
+        if globalVar.sfmlArea:
+            globalVar.sfmlArea.setMode(current.get_name())
