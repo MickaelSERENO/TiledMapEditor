@@ -41,6 +41,8 @@ class StaticTrace(Trace):
         self.indiceTile = None
         self.posMoving = sf.Vector2(0, 0)
         self.style="Static"
+        self.leftMousePress = False
+        self.controlKey = False
 
     def drawQuad(self):
         position = globalVar.sfmlArea.render.view.center - globalVar.sfmlArea.render.view.size / 2
@@ -73,6 +75,9 @@ class StaticTrace(Trace):
 
     def addTile(self, x, y):
         dndDatas = TileBox.dndDatas
+        if not dndDatas:
+            return
+
         indice = sf.Vector2(\
                 int(x/self.tileSize.x), int(y/self.tileSize.y))
 
@@ -88,7 +93,8 @@ class StaticTrace(Trace):
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
-                if len(self.listStaticTile):
+                self.leftMousePress = True
+                if len(self.listStaticTile) and not self.controlKey:
                     b = False
                     for i in range(len(self.listStaticTile)):
                         for j in range(len(self.listStaticTile[0])):
@@ -107,13 +113,30 @@ class StaticTrace(Trace):
                     self.indiceTile = sf.Vector2(int(event.x / self.tileSize.x), int(event.y / self.tileSize.y))
                     self.posMoving = sf.Vector2(event.x, event.y) - self.tileMoving.position
 
-        if event.type == Gdk.EventType.BUTTON_RELEASE:
-            if self.tileMoving:
-                self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
-                self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)] = self.tileMoving
-                self.tileMoving.position = sf.Vector2(self.tileSize.x * int(event.x / self.tileSize.x),\
-                        self.tileSize.y * int(event.y / self.tileSize.y))
+                if self.controlKey and self.leftMousePress:
+                    self.addTile(event.x, event.y)
 
+        if event.type == Gdk.EventType.BUTTON_RELEASE:
+            if event.button == 1:
+                self.leftMousePress = False
+                if self.tileMoving:
+                    self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
+                    self.listStaticTile[int(event.x / self.tileSize.x)][int(event.y / self.tileSize.y)] = self.tileMoving
+                    self.tileMoving.position = sf.Vector2(self.tileSize.x * int(event.x / self.tileSize.x),\
+                            self.tileSize.y * int(event.y / self.tileSize.y))
+
+        if event.type == Gdk.EventType.KEY_PRESS:
+            if event.get_keyval()[1] ==  Gdk.KEY_Control_L:
+                print("val")
+                self.controlKey = True
+
+        if event.type == Gdk.EventType.KEY_RELEASE:
+            if event.get_keyval()[1] ==  Gdk.KEY_Control_L:
+                self.controlKey = False
+
+        if event.type == Gdk.EventType.MOTION_NOTIFY:
+            if self.controlKey and self.leftMousePress:
+                self.addTile(event.x, event.y)
         Trace.updateEventTile(self, event)
 
     def update(self):
@@ -167,7 +190,7 @@ class DynamicTrace(Trace):
         dndDatas = TileBox.dndDatas
         if dndDatas['style'] == "Static" or dndDatas['style']=='Object':
             return self.addStaticTile(x, y)
-        window = Gtk.Window(title="Annimation")
+        window = Gtk.Window(title="Animation")
         window.set_property('modal', True)
 
         accelGroup = Gtk.AccelGroup()
@@ -240,7 +263,6 @@ class DynamicTrace(Trace):
     def confirmDynamicTile(self, button, widgets):
         dndDatas = TileBox.dndDatas
         origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
-        print(dndDatas['fileName'])
         self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
                 widgets['timeEntry'].get_value(), origin, widgets['position'],\
                 dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\

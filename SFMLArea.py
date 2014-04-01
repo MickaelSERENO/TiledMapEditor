@@ -19,6 +19,7 @@ class SFMLArea(Gtk.DrawingArea):
 
         self.connect("drag-data-received", self.do_drag_data_received)
         self.connect("key-press-event", self.keyPressEvent)
+        self.connect("key-release-event", self.keyPressEvent)
         self.connect("motion_notify_event", self.mouseMoveEvent) 
         self.connect("button-press-event", self.buttonPressEvent)
         self.connect("button-release-event", self.buttonReleaseEvent)
@@ -165,6 +166,11 @@ class SFMLArea(Gtk.DrawingArea):
         if event.type == Gdk.EventType.KEY_PRESS:
             if event.keyval == Gdk.KEY_Delete:
                 self.listTrace[-1].deleteTile()
+
+        self.updateLastEventTrace(event)
+
+    def keyReleaseEvent(self, widget, event):
+        self.updateLastEventTrace(event)
 
     def mouseMoveEvent(self, widget, event):
         if event.type == Gdk.EventType.MOTION_NOTIFY:

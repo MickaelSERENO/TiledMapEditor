@@ -89,8 +89,8 @@ class CreateMenu:
             notebook = Gtk.Notebook()
             notebook.append_page(self.createNewTileSet(window, fileManager, tileBox),\
                     Gtk.Label("Static"))
-            notebook.append_page(self.createNewAnnimation(window, fileManager, tileBox),\
-	                Gtk.Label("Annimation"))
+            notebook.append_page(self.createNewAnimation(window, fileManager, tileBox),\
+	                Gtk.Label("Animation"))
 
             window.connect("destroy", self.quitWindow, window, "cancel")
             window.add(notebook)
@@ -270,7 +270,7 @@ class CreateMenu:
         if 'window' in widgets:
             widgets['window'].destroy()
 
-    def createNewAnnimation(self, window, fileManager, tileBox):
+    def createNewAnimation(self, window, fileManager, tileBox):
         accelGroup = Gtk.AccelGroup()
         window.add_accel_group(accelGroup)
         grid = Gtk.Grid()
@@ -297,7 +297,7 @@ class CreateMenu:
 
         box = Gtk.Box()
         okButton = Gtk.Button(label="OK")
-        okButton.connect("clicked", self.cutAnnimation, widgets)
+        okButton.connect("clicked", self.cutAnimation, widgets)
         okButton.add_accelerator("activate", accelGroup, Gdk.KEY_Return, 0, \
                 Gtk.AccelFlags.VISIBLE)
         okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
@@ -354,19 +354,19 @@ class CreateMenu:
 
         hBox = Gtk.Box(spacing=6,orientation=Gtk.Orientation.HORIZONTAL)
         hBox.pack_start(widgets['table'], True, True, 0)
-        hBox.pack_start(self.insertNewAnnimation(widgets), False, False, 0)
+        hBox.pack_start(self.insertNewAnimation(widgets), False, False, 0)
 
         vBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         vBox.pack_start(hBox, True, True, 0)
         vBox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 0)
-        vBox.pack_start(self.actionAnnimation(widgets), False, False, 0)
+        vBox.pack_start(self.actionAnimation(widgets), False, False, 0)
 
         window.set_property("modal",True)
-        window.connect('delete-event', self.cancelAnnimation, widgets)
+        window.connect('delete-event', self.cancelAnimation, widgets)
         window.add(vBox)
         window.show_all()
 
-    def insertNewAnnimation(self, widgets):
+    def insertNewAnimation(self, widgets):
         if not widgets['imageEntered'].get_text():
             return
         grid = Gtk.Grid()
@@ -464,17 +464,17 @@ class CreateMenu:
         widgets['sizeX'].set_value(widgets['sizeX'].get_lower())
         widgets['sizeY'].set_value(widgets['sizeY'].get_lower())
 
-    def cutAnnimation(self, button, widgets):
+    def cutAnimation(self, button, widgets):
         if not 'table' in widgets:
             return
         for i in range(len(widgets['treeStore'])):
-            self.parent.tileBox.cutTileAnnimation(widgets['treeStore'],\
+            self.parent.tileBox.cutTileAnimation(widgets['treeStore'],\
                     widgets['treeStore'].get_iter(i),\
                     widgets['imageEntered'].get_text())
 
         self.quitWindow(button, widgets['imageWindow'])
 
-    def actionAnnimation(self, widgets):
+    def actionAnimation(self, widgets):
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         actionBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         delBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -504,7 +504,7 @@ class CreateMenu:
         actionBox.pack_start(okButton, False, False, 0)
         actionBox.pack_start(cancelButton, False, False, 0)
 
-        cancelButton.connect('clicked', self.cancelAnnimation, None, widgets)
+        cancelButton.connect('clicked', self.cancelAnimation, None, widgets)
         okButton.connect('clicked', self.quitWindow, widgets['window'])
         applyButton.connect('clicked', self.copieTreeStore, widgets)
 
@@ -520,7 +520,7 @@ class CreateMenu:
     def copieTreeStore(self, button, widgets):
         widgets['treeCopied'] = functions.copyTreeStore(widgets['treeStore'])
 
-    def cancelAnnimation(self, button, event, widgets):
+    def cancelAnimation(self, button, event, widgets):
         widgets['table'].unparent()
         widgets['treeStore'] = widgets['treeCopied']
         self.quitWindow(button, widgets['window'])
