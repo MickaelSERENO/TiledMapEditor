@@ -40,6 +40,10 @@ class SFMLArea(Gtk.DrawingArea):
     def setSlideProperties(self):
         self.vslide.connect("value-changed", self.moveView, "vertical")
         self.hslide.connect("value-changed", self.moveView, "horizontal")
+        self.vslide.connect("size-allocate", self.setScrollSizeAllocated, "vertical")
+        self.hslide.connect("size-allocate", self.setScrollSizeAllocated, "horizontal")
+        self.hslide.set_slider_size_fixed(True)
+        self.vslide.set_slider_size_fixed(True)
 
     def setSFMLSize(self, numberCases=None):
         if numberCases:
@@ -49,8 +53,16 @@ class SFMLArea(Gtk.DrawingArea):
         self.render.size.x = min(self.render.size.x, self.size.x)
         self.render.size.y = min(self.render.size.y, self.size.y)
         self.render.view.size = copy(self.render.size)
-        self.updateSlideValues()
         self.get_toplevel().show_all()
+        self.updateSlideValues()
+
+    def setScrollSizeAllocated(self, widget, allocation, scroll):
+        if scroll == "vertical":
+            self.vslide.set_min_slider_size(allocation.height*self.render.view.size.y/self.size.y)
+
+        else:
+            self.hslide.set_min_slider_size(allocation.width*self.render.view.size.x/self.size.x)
+
 
     def setMode(self, mode):
         self.mode = mode
@@ -60,6 +72,9 @@ class SFMLArea(Gtk.DrawingArea):
                 0, self.size.y - self.render.view.size.y, 1, 10, 0))
         self.hslide.set_adjustment(Gtk.Adjustment(self.render.view.center.x - self.render.view.size.x/2,\
                 0, self.size.x - self.render.view.size.x, 1, 10, 0))
+
+        self.setScrollSizeAllocated(self.vslide, self.vslide.get_allocation(), "vertical")
+        self.setScrollSizeAllocated(self.hslide, self.hslide.get_allocation(), "horizontal")
 
     def moveView(self, scroll, orientation):
         vector = sf.Vector2()
@@ -147,9 +162,12 @@ class SFMLArea(Gtk.DrawingArea):
         if time:
             for trace in self.listTrace[::-1]:
                 if trace.show:
-                    pos = self.render.map_pixel_to_coords(sf.Vector2(x, y), self.render.view)
+                    pos = self.convertCoord(sf.Vector2(x, y))
                     trace.addTile(pos.x, pos.y)
                     return
+
+    def convertCoord(self, coord):
+        return self.render.map_pixel_to_coords(coord, self.render.view)
 
     def manageTile(self, action):
         pass
@@ -181,12 +199,12 @@ class SFMLArea(Gtk.DrawingArea):
             self.updateLastEventTrace(event)
 
 
-    def addTrace(self, tileSize, style):
-        if style == "Static":
-            self.listTrace.append(StaticTrace(tileSize))
-            self.listTrace[-1].initStaticList(self.size)
-        else:
-            self.listTrace.append(DynamicTrace())
+    def addStaticTrace(self, tileSize, shift):
+        self.listTrace.append(StaticTrace(tileSize, shift))
+        self.listTrace[-1].initStaticList(self.size - shift)
+
+    def addDynamicTrace(self):
+        self.listTrace.append(DynamicTrace())
 
 class SFMLMakeObject(Gtk.DrawingArea):
     def __init__(self, tileSize, numberCase, nameObject):
