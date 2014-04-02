@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#-*-coding:utf-8-*-
 
 from gi.repository import Gtk, GObject, Gdk
 from TileWindow import TileWindow
