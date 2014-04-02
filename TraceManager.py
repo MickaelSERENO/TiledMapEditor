@@ -57,10 +57,14 @@ class TraceManager(Gtk.Box):
         self.toolButton['moveUp'].connect("clicked", self.moveTrace, True)
         self.toolButton['delete'].connect("clicked", self.deleteTrace)
 
-    def addTrace(self, tileSize, name, style="Static"):
+    def addStaticTrace(self, tileSize, shift, name):
         self.listStore.append([True, name])
-        globalVar.sfmlArea.addTrace(tileSize, style)
+        globalVar.sfmlArea.addStaticTrace(tileSize, shift)
         self.show_all()
+
+    def addDynamicTrace(self, name):
+        self.listStore.append([True, name])
+        globalVar.sfmlArea.addDynamicTrace()
 
     def getNumberOfTraces(self):
         return len(self.listStore)
@@ -102,13 +106,14 @@ class TraceManager(Gtk.Box):
         self.treeView.set_model(self.listStore)
         self.show_all()
 
-    def getSaveFileElem(self, tileBox):
+    def getSaveFileElem(self, tileBox, objectManager):
         listTrace = globalVar.sfmlArea.listTrace
         traceElem = ET.Element("Trace")
         for trace in listTrace:
             if trace.style == "Static":
                 staticTraceElem = ET.SubElement(traceElem, "StaticTrace")
                 staticTraceElem.set('size', str(trace.tileSize.x) + 'x' + str(trace.tileSize.y))
+                staticTraceElem.set('shift', str(trace.shift.x) + 'x' + str(trace.shift.y))
                 for column in trace.listStaticTile:
                     columnSubElem = ET.SubElement(staticTraceElem, "Column")
                     columnTileID = io.StringIO()
@@ -116,16 +121,24 @@ class TraceManager(Gtk.Box):
 
                     columnTileRow = []
                     columnFileRow = []
+                    columnObjectRow = []
 
                     tileCSV = csv.writer(columnTileID)
                     fileCSV = csv.writer(columnFileID)
                     for tile in column:
                         if tile:
-                            columnTileRow.append(str(tile.tileID))
-                            columnFileRow.append(str(tileBox.getFileID(tile.fileName, "static")))
+                            if type(tile)=="StaticTile":
+                                columnTileRow.append(str(tile.tileID))
+                                columnFileRow.append(str(tileBox.getFileID(tile.fileName, "static")))
+                                columnObjectRow.append(0)
+                            elif type(tile)=="MakedObjectTile":
+                                columnTileRow.append(objectManager.getObjectID(tile.nameObject))
+                                columnFileRow.append(-1)
+                                columnObjectRow.append(1)
                         else:
                             columnTileRow.append('-1')
                             columnFileRow.append('-1')
+                            columnObjectRow.append('-1')
                     tileCSV.writerow(columnTileRow)
                     fileCSV.writerow(columnFileRow)
 
