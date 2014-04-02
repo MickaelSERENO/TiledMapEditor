@@ -2,8 +2,11 @@ from gi.repository import Gtk, Gdk,GdkPixbuf
 from SFMLArea import *
 from TraceTile import *
 from TileBox import *
+import io
 import sfml as sf
 import platform
+import xml.etree.ElementTree as ET
+import csv
 if platform.system() == "Linux":
     from gi.repository import GdkX11
 elif platform.system() == "Windows":
@@ -161,14 +164,27 @@ class ObjectManager(Gtk.Box):
         title = widgets['widgetsProperties']['nameEntered'].get_text()
         typeName = widgets['widgetsProperties']['typeComboBox'].get_active_text()
 
-        for i in range(widgets['sfmlMakeObject'].numberCase.x):
-            for j in range(widgets['sfmlMakeObject'].numberCase.y):
+        tileID = list()
+        fileName = list()
+
+        for j in range(widgets['sfmlMakeObject'].numberCase.y):
+            tileID.append(list())
+            fileName.append(list())
+            for i in range(widgets['sfmlMakeObject'].numberCase.x):
                 if widgets['sfmlMakeObject'].listTile[i][j]:
                     render.draw(widgets['sfmlMakeObject'].listTile[i][j].sprite)
+                    tileID[-1].append(widgets['sfmlMakeObject'].listTile[i][j].tileID)
+                    fileName[-1].append(widgets['sfmlMakeObject'].listTile[i][j].fileName)
+                else:
+                    tileID[-1].append(-1)
+                    fileName[-1].append(-1)
 
         render.display()
         self.objectDict[title] = \
-                MakedObjectTile(render.texture, widgets['sfmlMakeObject'].listTile, widgets['sfmlMakeObject'])
+                MakedObjectTile(render.texture,\
+                widgets['sfmlMakeObject'].tileSize, widgets['sfmlMakeObject'].numberCase,\
+                tileID, fileName,\
+                title, typeName)
 
         if not typeName in self.expanderDict.keys():
             self.expanderDict[typeName] = Gtk.Expander()
@@ -183,6 +199,7 @@ class ObjectManager(Gtk.Box):
 
         model = self.expanderDict[typeName].get_child().get_model()
         ObjectManager.objectTexture[title] = render.texture.copy()
+
         image = ObjectManager.objectTexture[title].to_image()
         pix = ObjectTileIcon.new(image.pixels.data, image.width, image.height, title)
         model.append(None, [pix, title])
@@ -193,13 +210,42 @@ class ObjectManager(Gtk.Box):
         widgets['windowMakeObject'].destroy()
         widgets['widgetsProperties']['window'].destroy()
 
-        print(title)
-
     def quitWindow(self, button, window):
         window.destroy()
 
     def destroyQuitWindow(self, window, event):
         window.destroy()
+
+    def getSaveFileElem(self, tileBox):
+        objectElem = ET.Element('Objects')
+        objectID = 0
+
+        for tileObject in self.objectDict.values():
+            subObject = ET.SubElement(objectElem, 'ObjectElem')
+            subObject.set('type', tileObject.typeObject)
+            subObject.set('name', tileObject.nameObject)
+            subObject.set('tileSize', str(tileObject.tileSize.x) + 'x' + str(tileObject.tileSize.y))
+            subObject.set('numberCase', str(tileObject.numberCase.x) + 'x' + str(tileObject.numberCase.y))
+
+            for tileIDList, fileNameList in zip(tileObject.tileID, tileObject.fileName):
+                rowObject = ET.SubElement(subObject, 'ObjectRow')
+                subTileID = io.StringIO()
+                subFileID = io.StringIO()
+
+                subTileCSV = csv.writer(subTileID)
+                subFileCSV = csv.writer(subFileID)
+                subTileCSV.writerow([str(x) for x in tileIDList])
+                subFileCSV.writerow([str(tileBox.getFileID(x)) for x in fileNameList])
+
+                rowObject.set('tileID', subTileID.getvalue())
+                rowObject.set('fileID', subFileID.getvalue())
+
+        return objectElem
+
+    def getObjectID(self, name):
+        l = list(self.dynamicDict.keys())
+        if l.count(name):
+            return l.index(name)
 
 class ObjectTileIcon(GdkPixbuf.Pixbuf):
     def new(data, width, height, name):

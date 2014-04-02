@@ -179,9 +179,9 @@ class TileWindow(Gtk.Window):
                 self.fileManager.openFileXML(self.tileBox, self.traceManager)
 
         elif action=="saveAs":
-            self.fileManager.saveAsFile(self.tileBox, self.traceManager)
+            self.fileManager.saveAsFile(self.tileBox, self.traceManager, self.objectManager)
         elif action=="save":
-            self.fileManager.saveFile(self.tileBox, self.traceManager)
+            self.fileManager.saveFile(self.tileBox, self.traceManager, self.objectManager)
     
     def newFile(self, widget):
         self.newContents.newFile(self.fileManager)
