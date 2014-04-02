@@ -176,7 +176,7 @@ class TileWindow(Gtk.Window):
             if mime=="image":
                 self.newContents.createNewImage(self.fileManager, self.tileBox)
             elif mime=="xml":
-                self.fileManager.openFileXML(self.tileBox, self.traceManager)
+                self.fileManager.openFileXML(self.tileBox, self.traceManager, self.objectManager)
 
         elif action=="saveAs":
             self.fileManager.saveAsFile(self.tileBox, self.traceManager, self.objectManager)

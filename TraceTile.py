@@ -370,7 +370,8 @@ class ObjectTile():
         self.position = position
 
     def update(self):
-        self.sfmlRenderer.render.draw(self.sprite)
+        if self.sfmlRenderer:
+            self.sfmlRenderer.render.draw(self.sprite)
 
     def setPosition(self, position):
         self.sprite.position = position

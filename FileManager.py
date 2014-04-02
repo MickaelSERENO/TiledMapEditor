@@ -25,13 +25,14 @@ class FileManager():
 
         return self._getFileName(dialog, mime)
 
-    def openFileXML(self, tileBox, traceManager):
+    def openFileXML(self, tileBox, traceManager, objectManager):
         fileName = self._openFile("xml")
         xmlTree = ET.parse(fileName)
         xmlRoot = xmlTree.getroot()
 
         globalVar.tileWindow.decodeXML(xmlRoot.find('Window'))
         tileBox.decodeXML(xmlRoot.find('Files'), path.dirname(fileName))
+        objectManager.decodeXML(xmlRoot.find('Objects'), tileBox)
 
     def openFileImage(self):
         return self._openFile('image')

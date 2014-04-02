@@ -365,6 +365,15 @@ class TileBox(Gtk.ScrolledWindow):
                     tile.name = tileDict['name']
                     tile.type = tileDict['type']
 
+    def getDndDatas(self, tileID, fileID):
+        if fileID < len(self.staticList):
+            return self.staticList[fileID].getDndDatasFromPath(tileID)
+        else:
+            i=0
+            for dynamicIconView in self.dynamicDict.values():
+                if i == fileID-len(self.staticList):
+                    return dynamicIconView.getDndDatasFromPath(tileID)
+
 class DragIconView(Gtk.IconView):
     def __init__(self, model, numColumn, fileName):
         Gtk.IconView.__init__(self, model)
@@ -427,14 +436,19 @@ class StaticDragIconView(DragIconView):
         selected_path = self.get_selected_items()[0]
         selected_iter = self.get_model().get_iter(selected_path)
 
-        TileBox.dndDatas = {'from':'TileBox', 'spacing':self.spacing, 'size':self.size, \
+        TileBox.dndDatas = self.getDndDatasFromPath(selected_path)
+
+    def manageDndDatas(self, widget, path):
+        self.setDndDatas()
+
+    def getDndDatasFromPath(self, path):
+        selected_iter = self.get_model().get_iter(path)
+
+        return {'from':'TileBox', 'spacing':self.spacing, 'size':self.size, \
                 'fileName':self.fileName, 'name':self.get_name(),\
                 'numColumn':self.numColumn, 'style':self.style,\
                 'subRect':self.get_model().get_value(selected_iter, 0).rect,
                 'tileID':self.get_model().get_value(selected_iter, 0).tileID}
-
-    def manageDndDatas(self, widget, path):
-        self.setDndDatas()
 
 class DynamicDragIconView(DragIconView):
     def __init__(self, model, numColumn, fileName, name):
@@ -444,16 +458,22 @@ class DynamicDragIconView(DragIconView):
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
         if time:
-            print('info', info, '\n selection_data', selection_data)
             selected_path = self.get_selected_items()[0]
             selected_iter = self.get_model().get_iter(selected_path)
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
 
-            TileBox.dndDatas = {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
+            TileBox.dndDatas = self.getDndDatasFromPath(selected_path)
+
+    def getDndDatasFromPath(self, path):
+            selected_iter = self.get_model().get_iter(path)
+
+            return {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
                     'animName':self.get_name(), 'fileName':self.fileName,\
                     'numColumn':self.numColumn,\
                     'style':self.style,\
                     'subRect':self.get_model().get_value(selected_iter, 0).rect}
+
+
 
 class TileIcon(GdkPixbuf.Pixbuf):
     def new(color, tf, deep, sizex, sizey, rect, tileID):

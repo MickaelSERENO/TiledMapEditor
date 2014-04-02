@@ -180,9 +180,16 @@ class ObjectManager(Gtk.Box):
                     fileName[-1].append(-1)
 
         render.display()
+
+        self.addObjectFromTexture(render.texture, widgets['sfmlMakeObject'].tileSize, \
+                widgets['sfmlMakeObject'].numberCase, tileID, fileName, title, typeName)
+        widgets['windowMakeObject'].destroy()
+        widgets['widgetsProperties']['window'].destroy()
+
+    def addObjectFromTexture(self, texture, tileSize, numberCase, tileID, fileName, title, typeName):
         self.objectDict[title] = \
-                MakedObjectTile(render.texture,\
-                widgets['sfmlMakeObject'].tileSize, widgets['sfmlMakeObject'].numberCase,\
+                MakedObjectTile(texture,\
+                tileSize, numberCase,\
                 tileID, fileName,\
                 title, typeName)
 
@@ -198,7 +205,7 @@ class ObjectManager(Gtk.Box):
             self.typeList.append(typeName)
 
         model = self.expanderDict[typeName].get_child().get_model()
-        ObjectManager.objectTexture[title] = render.texture.copy()
+        ObjectManager.objectTexture[title] = texture.copy()
 
         image = ObjectManager.objectTexture[title].to_image()
         pix = ObjectTileIcon.new(image.pixels.data, image.width, image.height, title)
@@ -206,9 +213,6 @@ class ObjectManager(Gtk.Box):
         self.expanderBox.pack_start(self.expanderDict[typeName], False, False, 0)
 
         self.get_toplevel().show_all()
-
-        widgets['windowMakeObject'].destroy()
-        widgets['widgetsProperties']['window'].destroy()
 
     def quitWindow(self, button, window):
         window.destroy()
@@ -246,6 +250,59 @@ class ObjectManager(Gtk.Box):
         l = list(self.dynamicDict.keys())
         if l.count(name):
             return l.index(name)
+
+    def decodeXML(self, element, tileBox):
+        listObject = element.findall('ObjectElem')
+        for objectElem in listObject:
+            elemValues = dict()
+            for items in objectElem.items():
+                elemValues[items[0]] = items[1]
+
+            rowTileList = objectElem.findall('ObjectRow')
+            
+            tileSizeSplit = elemValues['tileSize'].split('x')
+            elemValues['tileSize'] = sf.Vector2(float(tileSizeSplit[0]), float(tileSizeSplit[1]))
+            tileNumberCaseSplit = elemValues['numberCase'].split('x')
+            elemValues['numberCase'] = sf.Vector2(float(tileNumberCaseSplit[0]), float(tileNumberCaseSplit[1]))
+
+            render = sf.RenderTexture(elemValues['numberCase'].x * elemValues['tileSize'].x, \
+                    elemValues['numberCase'].y * elemValues['tileSize'].y)
+            render.clear(sf.Color(0,0,0,0))
+
+            fileIDList = list()
+            tileIDList = list()
+
+            y=0
+            for rowTile in rowTileList:
+                rowTileValues = dict()
+                for rowItems in rowTile.items():
+                    rowTileValues[rowItems[0]] = rowItems[1]
+
+                tileIDListElement = [rowTileValues['tileID']]
+                tileIDListElement = list(csv.reader(tileIDListElement))
+
+                fileIDListElement = [rowTileValues['fileID']]
+                fileIDListElement = list(csv.reader(fileIDListElement))
+
+                fileIDList.append(fileIDListElement[0])
+                tileIDList.append(tileIDListElement[0])
+
+                x=0
+                for tileID, fileID in zip(tileIDListElement[0], fileIDListElement[0]):
+                    if int(tileID) != -1 and int(fileID) != -1:
+                        dndDatas = tileBox.getDndDatas(int(tileID), int(fileID))
+                        print(dndDatas)
+                        staticTile = StaticTile(dndDatas['tileID'], sf.Vector2(x, y)*elemValues['tileSize'], \
+                                dndDatas['subRect'], TileBox.textureList[dndDatas['name']], \
+                                dndDatas['fileName'], True, None)
+
+                        render.draw(staticTile.sprite)
+                    x = x+1
+                y=y+1
+
+            render.display()
+            self.addObjectFromTexture(render.texture, elemValues['tileSize'], elemValues['numberCase'], \
+                    tileIDList, fileIDList, elemValues['name'], elemValues['type'])
 
 class ObjectTileIcon(GdkPixbuf.Pixbuf):
     def new(data, width, height, name):
