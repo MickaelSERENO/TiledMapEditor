@@ -218,23 +218,37 @@ class CreateMenu:
         nameLabel = Gtk.Label("Name")
         nameEntered = Gtk.Entry(text="Trace #"+str(traceManager.getNumberOfTraces()))
 
-        xComboBox = Gtk.ComboBoxText()
-        for i in range(1, globalVar.sfmlArea.numberCases.x+1):
-            xComboBox.append_text(str(i*globalVar.sfmlArea.sizeCase.x))
-
-        yComboBox = Gtk.ComboBoxText()
-        for i in range(1, globalVar.sfmlArea.numberCases.y+1):
-            yComboBox.append_text(str(i*globalVar.sfmlArea.sizeCase.y))
-
         sizeLabel = Gtk.Label("Size")
-        xLabel = Gtk.Label("x")
+        xSizeSpinAdjustment = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+        ySizeSpinAdjustment = Gtk.Adjustment(32, 0, 100, 1, 10, 0)
+
+        xSizeSpinButton = Gtk.SpinButton()
+        xSizeSpinButton.set_adjustment(xSizeSpinAdjustment)
+        ySizeSpinButton = Gtk.SpinButton()
+        ySizeSpinButton.set_adjustment(ySizeSpinAdjustment)
+
+        shiftLabel = Gtk.Label("Shift")
+        xShiftSpinAdjustment = Gtk.Adjustment(0, 0, 100, 1, 10, 0)
+        yShiftSpinAdjustment = Gtk.Adjustment(0, 0, 100, 1, 10, 0)
+
+        xShiftSpinButton = Gtk.SpinButton()
+        xShiftSpinButton.set_adjustment(xShiftSpinAdjustment)
+        yShiftSpinButton = Gtk.SpinButton()
+        yShiftSpinButton.set_adjustment(yShiftSpinAdjustment)
+
+        xSizeLabel = Gtk.Label("x")
+        xShiftLabel = Gtk.Label("x")
 
         grid.attach(nameLabel, 0, 0, 1, 1)
         grid.attach_next_to(nameEntered, nameLabel, Gtk.PositionType.RIGHT, 3, 1)
         grid.attach_next_to(sizeLabel, nameLabel, Gtk.PositionType.BOTTOM, 1, 1)
-        grid.attach_next_to(xComboBox, sizeLabel, Gtk.PositionType.RIGHT, 1, 1)
-        grid.attach_next_to(xLabel, xComboBox, Gtk.PositionType.RIGHT, 1, 1)
-        grid.attach_next_to(yComboBox, xLabel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(xSizeSpinButton, sizeLabel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(xSizeLabel, xSizeSpinButton, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(ySizeSpinButton, xSizeLabel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(shiftLabel, sizeLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(xShiftSpinButton, shiftLabel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(xShiftLabel, xShiftSpinButton, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(yShiftSpinButton, xShiftLabel, Gtk.PositionType.RIGHT, 1, 1)
 
         hbox = Gtk.Box()
         okButton = Gtk.Button(label="OK")
@@ -243,8 +257,9 @@ class CreateMenu:
         okButton.add_accelerator("activate", accelGroup, Gdk.KEY_KP_Enter, 0, \
                 Gtk.AccelFlags.VISIBLE)
         okButton.connect("clicked", self.newStaticTrace, \
-                {'xComboBox':xComboBox, 'yComboBox':yComboBox,\
-                'nameEntered':nameEntered, 'traceManager':traceManager, 'window':window})
+                {'xSizeSpinButton':xSizeSpinButton, 'ySizeSpinButton':ySizeSpinButton,\
+                'nameEntered':nameEntered, 'xShiftSpinButton':xShiftSpinButton,\
+                'yShiftSpinButton':yShiftSpinButton, 'traceManager':traceManager, 'window':window})
         cancelButton = Gtk.Button(label="Cancel")
         cancelButton.connect("clicked", self.quitWindow, window)
         cancelButton.add_accelerator("activate", accelGroup, Gdk.KEY_Escape, 0, \
@@ -526,13 +541,16 @@ class CreateMenu:
         self.quitWindow(button, widgets['window'])
 
     def newStaticTrace(self, button, widgets):
-        widgets['traceManager'].addTrace(sf.Vector2(int(widgets['xComboBox'].get_active_text()),\
-            int(widgets['yComboBox'].get_active_text())), widgets['nameEntered'].get_text(), "Static")
+        widgets['traceManager'].addStaticTrace(sf.Vector2(int(widgets['xSizeSpinButton'].get_value()),\
+            int(widgets['ySizeSpinButton'].get_value())),\
+            sf.Vector2(int(widgets['xShiftSpinButton'].get_value()),\
+            int(widgets['yShiftSpinButton'].get_value())),\
+            widgets['nameEntered'].get_text())
         if 'window' in widgets:
             widgets['window'].destroy()
 
     def newDynamicTrace(self, button, widgets):
-        widgets['traceManager'].addTrace(None, widgets['nameEntered'].get_text(), "Dynamic")
+        widgets['traceManager'].addDynamicTrace(widgets['nameEntered'].get_text())
         if 'window' in widgets:
             widgets['window'].destroy()
 
