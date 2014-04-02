@@ -264,7 +264,7 @@ class TileBox(Gtk.ScrolledWindow):
             l = list(self.dynamicDict.keys())
             if l.count(fileName):
                 return len(self.staticList)+l.index(fileName)
-        return None
+        return -1
 
     def decodeXML(self, element, path):
         listStaticElement = element.findall('Static')
