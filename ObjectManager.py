@@ -7,17 +7,18 @@ import sfml as sf
 import platform
 import xml.etree.ElementTree as ET
 import csv
+from collections import OrderedDict
 if platform.system() == "Linux":
     from gi.repository import GdkX11
 elif platform.system() == "Windows":
     from gi.repository import GdkWin32
 
 class ObjectManager(Gtk.Box):
-    objectTexture = dict()
+    objectTexture = OrderedDict()
     def __init__(self):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
-        self.objectDict = dict()
-        self.expanderDict = dict()
+        self.objectDict = OrderedDict()
+        self.expanderDict = OrderedDict()
         self.typeList = list()
         self.numColumn = 2
         self.expanderBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -167,10 +168,10 @@ class ObjectManager(Gtk.Box):
         tileID = list()
         fileName = list()
 
-        for j in range(widgets['sfmlMakeObject'].numberCase.y):
+        for i in range(widgets['sfmlMakeObject'].numberCase.x):
             tileID.append(list())
             fileName.append(list())
-            for i in range(widgets['sfmlMakeObject'].numberCase.x):
+            for j in range(widgets['sfmlMakeObject'].numberCase.y):
                 if widgets['sfmlMakeObject'].listTile[i][j]:
                     render.draw(widgets['sfmlMakeObject'].listTile[i][j].sprite)
                     tileID[-1].append(widgets['sfmlMakeObject'].listTile[i][j].tileID)
@@ -205,12 +206,12 @@ class ObjectManager(Gtk.Box):
             self.typeList.append(typeName)
 
         model = self.expanderDict[typeName].get_child().get_model()
-        ObjectManager.objectTexture[title] = texture.copy()
 
-        image = ObjectManager.objectTexture[title].to_image()
-        pix = ObjectTileIcon.new(image.pixels.data, image.width, image.height, title)
+        image = texture.to_image()
+        pix = ObjectTileIcon.new(image.pixels.data, image.width, image.height, title, numberCase)
         model.append(None, [pix, title])
         self.expanderBox.pack_start(self.expanderDict[typeName], False, False, 0)
+        ObjectManager.objectTexture[title] = texture.copy()
 
         self.get_toplevel().show_all()
 
@@ -232,7 +233,7 @@ class ObjectManager(Gtk.Box):
             subObject.set('numberCase', str(tileObject.numberCase.x) + 'x' + str(tileObject.numberCase.y))
 
             for tileIDList, fileNameList in zip(tileObject.tileID, tileObject.fileName):
-                rowObject = ET.SubElement(subObject, 'ObjectRow')
+                columnObject = ET.SubElement(subObject, 'ObjectColumn')
                 subTileID = io.StringIO()
                 subFileID = io.StringIO()
 
@@ -241,73 +242,85 @@ class ObjectManager(Gtk.Box):
                 subTileCSV.writerow([str(x) for x in tileIDList])
                 subFileCSV.writerow([str(tileBox.getFileID(x)) for x in fileNameList])
 
-                rowObject.set('tileID', subTileID.getvalue())
-                rowObject.set('fileID', subFileID.getvalue())
+                columnObject.set('tileID', subTileID.getvalue())
+                columnObject.set('fileID', subFileID.getvalue())
 
         return objectElem
 
     def getObjectID(self, name):
-        l = list(self.dynamicDict.keys())
+        l = list(self.objectDict.keys())
         if l.count(name):
             return l.index(name)
 
     def decodeXML(self, element, tileBox):
         listObject = element.findall('ObjectElem')
         for objectElem in listObject:
-            elemValues = dict()
+            elemValues = OrderedDict()
             for items in objectElem.items():
                 elemValues[items[0]] = items[1]
 
-            rowTileList = objectElem.findall('ObjectRow')
-            
             tileSizeSplit = elemValues['tileSize'].split('x')
             elemValues['tileSize'] = sf.Vector2(float(tileSizeSplit[0]), float(tileSizeSplit[1]))
             tileNumberCaseSplit = elemValues['numberCase'].split('x')
             elemValues['numberCase'] = sf.Vector2(float(tileNumberCaseSplit[0]), float(tileNumberCaseSplit[1]))
 
+            columnTileList = objectElem.findall('ObjectColumn')
+
             render = sf.RenderTexture(elemValues['numberCase'].x * elemValues['tileSize'].x, \
                     elemValues['numberCase'].y * elemValues['tileSize'].y)
             render.clear(sf.Color(0,0,0,0))
 
-            fileIDList = list()
+            fileNameList = list()
             tileIDList = list()
 
-            y=0
-            for rowTile in rowTileList:
-                rowTileValues = dict()
-                for rowItems in rowTile.items():
-                    rowTileValues[rowItems[0]] = rowItems[1]
+            x=0
+            for columnTile in columnTileList:
+                columnTileValues = OrderedDict()
+                for columnItems in columnTile.items():
+                    columnTileValues[columnItems[0]] = columnItems[1]
 
-                tileIDListElement = [rowTileValues['tileID']]
+                tileIDListElement = [columnTileValues['tileID']]
                 tileIDListElement = list(csv.reader(tileIDListElement))
 
-                fileIDListElement = [rowTileValues['fileID']]
+                fileIDListElement = [columnTileValues['fileID']]
                 fileIDListElement = list(csv.reader(fileIDListElement))
 
-                fileIDList.append(fileIDListElement[0])
                 tileIDList.append(tileIDListElement[0])
+                fileNameList.append([tileBox.getFileName(int(x)) for x in fileIDListElement[0]])
 
-                x=0
+                y=0
                 for tileID, fileID in zip(tileIDListElement[0], fileIDListElement[0]):
                     if int(tileID) != -1 and int(fileID) != -1:
                         dndDatas = tileBox.getDndDatas(int(tileID), int(fileID))
-                        print(dndDatas)
                         staticTile = StaticTile(dndDatas['tileID'], sf.Vector2(x, y)*elemValues['tileSize'], \
                                 dndDatas['subRect'], TileBox.textureList[dndDatas['name']], \
                                 dndDatas['fileName'], True, None)
 
                         render.draw(staticTile.sprite)
-                    x = x+1
-                y=y+1
+                    y = y+1
+                x=x+1
 
             render.display()
             self.addObjectFromTexture(render.texture, elemValues['tileSize'], elemValues['numberCase'], \
-                    tileIDList, fileIDList, elemValues['name'], elemValues['type'])
+                    tileIDList, fileNameList,\
+                    elemValues['name'], elemValues['type'])
+
+    def getDndDatas(self, objectID):
+        i=0
+        for obj in self.objectDict.values():
+            if objectID == self.getObjectID(obj.nameObject):
+                return {'from':'ObjectManager', 'numberCase':obj.numberCase,\
+                        'name':obj.nameObject, 'numColumn':self.numColumn, 'style':'Object',\
+                        'objectTexture':ObjectManager.objectTexture[obj.nameObject]}
+
+        return None
 
 class ObjectTileIcon(GdkPixbuf.Pixbuf):
-    def new(data, width, height, name):
-        objet = GdkPixbuf.Pixbuf.new_from_data(data, GdkPixbuf.Colorspace.RGB, True, 8, width, height, 4*width, None, None)
+    def new(data, width, height, name, numberCase):
+        objet = GdkPixbuf.Pixbuf.new_from_data(data, GdkPixbuf.Colorspace.RGB, True, 8, width, height, \
+                4*width, None, None)
         objet.name = name 
+        objet.numberCase = numberCase
         return objet
 
 class ObjectDragIconView(DragIconView):
@@ -325,4 +338,5 @@ class ObjectDragIconView(DragIconView):
             TileBox.dndDatas = {'from':'ObjectManager',\
                     'name':self.get_model().get_value(selected_iter, 1),\
                     'numColumn':self.numColumn, 'style':self.style,\
+                    'numberCase':self.get_model().get_value(selected_iter, 0).numberCase,\
                     'objectTexture':ObjectManager.objectTexture[self.get_model().get_value(selected_iter, 1)]}

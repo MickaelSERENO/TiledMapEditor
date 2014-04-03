@@ -59,12 +59,12 @@ class TraceManager(Gtk.Box):
 
     def addStaticTrace(self, tileSize, shift, name):
         self.listStore.append([True, name])
-        globalVar.sfmlArea.addStaticTrace(tileSize, shift)
+        globalVar.sfmlArea.addStaticTrace(tileSize, shift, name)
         self.show_all()
 
     def addDynamicTrace(self, name):
         self.listStore.append([True, name])
-        globalVar.sfmlArea.addDynamicTrace()
+        globalVar.sfmlArea.addDynamicTrace(name)
 
     def getNumberOfTraces(self):
         return len(self.listStore)
@@ -114,10 +114,12 @@ class TraceManager(Gtk.Box):
                 staticTraceElem = ET.SubElement(traceElem, "StaticTrace")
                 staticTraceElem.set('size', str(trace.tileSize.x) + 'x' + str(trace.tileSize.y))
                 staticTraceElem.set('shift', str(trace.shift.x) + 'x' + str(trace.shift.y))
+                staticTraceElem.set('name', trace.name)
                 for column in trace.listStaticTile:
                     columnSubElem = ET.SubElement(staticTraceElem, "Column")
                     columnTileID = io.StringIO()
                     columnFileID = io.StringIO()
+                    columnObjectID = io.StringIO()
 
                     columnTileRow = []
                     columnFileRow = []
@@ -125,30 +127,32 @@ class TraceManager(Gtk.Box):
 
                     tileCSV = csv.writer(columnTileID)
                     fileCSV = csv.writer(columnFileID)
+                    objectCSV = csv.writer(columnObjectID)
+
                     for tile in column:
                         if tile:
-                            if type(tile)=="StaticTile":
+                            if type(tile)==StaticTile:
                                 columnTileRow.append(str(tile.tileID))
                                 columnFileRow.append(str(tileBox.getFileID(tile.fileName, "static")))
-                                columnObjectRow.append(0)
-                            elif type(tile)=="MakedObjectTile":
-                                columnTileRow.append(objectManager.getObjectID(tile.nameObject))
-                                columnFileRow.append(-1)
-                                columnObjectRow.append(1)
+                                columnObjectRow.append('0')
+                            elif type(tile)==ObjectTile:
+                                columnTileRow.append(objectManager.getObjectID(tile.name))
+                                columnFileRow.append('-1')
+                                columnObjectRow.append('1')
                         else:
                             columnTileRow.append('-1')
                             columnFileRow.append('-1')
-                            columnObjectRow.append('-1')
+                            columnObjectRow.append('0')
                     tileCSV.writerow(columnTileRow)
                     fileCSV.writerow(columnFileRow)
+                    objectCSV.writerow(columnObjectRow)
 
-                    columnTileSubElem = ET.SubElement(columnSubElem, "tileID")
-                    columnTileSubElem.set('code', columnTileID.getvalue())
-
-                    columnFileSubElem = ET.SubElement(columnSubElem, "fileID")
-                    columnFileSubElem.set('code', columnFileID.getvalue())
+                    columnSubElem.set('tileID', columnTileID.getvalue())
+                    columnSubElem.set('fileID', columnFileID.getvalue())
+                    columnSubElem.set('objectID', columnObjectID.getvalue())
             else:
                 dynamicTraceElem = ET.SubElement(traceElem, 'DynamicTrace')
+                dynamicTraceElem.set('name', trace.name)
                 for tile in trace.listDynamicTile:
                     if tile.style == "Dynamic":
                         tileSubElem = ET.SubElement(dynamicTraceElem, "DynamicTile")  
@@ -165,3 +169,53 @@ class TraceManager(Gtk.Box):
                         tileSubElem.set('position', str(tile.position.x)+'x'+str(tile.position.y))
 
         return traceElem
+
+    def decodeXML(self, elem, tileBox, objectManager):
+        staticTraceList = elem.findall('StaticTrace')
+        dynamicTraceList = elem.findall('DynamicTrace')
+
+        for staticTraceElem in staticTraceList:
+            traceValues = dict()
+            for items in staticTraceElem.items():
+                traceValues[items[0]] = items[1]
+
+            tileSizeSplit = traceValues['size'].split('x')
+            traceValues['size'] = sf.Vector2(float(tileSizeSplit[0]), float(tileSizeSplit[1]))
+            tileShiftSplit = traceValues['shift'].split('x')
+            traceValues['shift'] = sf.Vector2(float(tileShiftSplit[0]), float(tileShiftSplit[1]))
+
+            self.addStaticTrace(traceValues['size'], traceValues['shift'], traceValues['name'])
+
+            staticTrace = globalVar.sfmlArea.listTrace[-1]
+
+            x=0
+            for columnElem in staticTraceElem.findall('Column'):
+                columnValues = dict()
+                for items in columnElem.items():
+                    columnValues[items[0]] = items[1]
+
+                tileIDListElement = [columnValues['tileID']]
+                tileIDListElement = list(csv.reader(tileIDListElement))
+
+                fileIDListElement = [columnValues['fileID']]
+                fileIDListElement = list(csv.reader(fileIDListElement))
+
+                objectIDListElement = [columnValues['objectID']]
+                objectIDListElement = list(csv.reader(objectIDListElement))
+
+                y=0
+                for tileID, fileID, objectID in\
+                        zip(tileIDListElement[0], fileIDListElement[0], objectIDListElement[0]):
+                    if int(tileID) != -1:
+                        dndDatas = None
+                        if int(fileID) != -1:
+                            dndDatas = tileBox.getDndDatas(int(tileID), int(fileID))
+                        elif int(objectID) == 1:
+                           dndDatas = objectManager.getDndDatas(int(tileID))
+                        staticTrace.addTileFromDnd(x*traceValues['size'].x + traceValues['shift'].x,\
+                                    y*traceValues['size'].y+traceValues['shift'].y, dndDatas)
+                    y=y+1
+                x=x+1
+
+        for dynamicTrace in dynamicTraceList:
+            pass

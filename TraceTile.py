@@ -6,10 +6,11 @@ import functions
 import globalVar
 
 class Trace:
-    def __init__(self):
+    def __init__(self, name):
         self.show = True
         self.tileMoving = None
         self.posMoving = sf.Vector2(0, 0)
+        self.name = name
 
     def update(self):
         if not self.show:
@@ -32,8 +33,8 @@ class Trace:
         return
 
 class StaticTrace(Trace):
-    def __init__(self, tileSize, shift):
-        Trace.__init__(self)
+    def __init__(self, tileSize, shift, name):
+        Trace.__init__(self, name)
         self.listStaticTile = list(list())
         self.tileSize = tileSize
         self.show = True
@@ -84,12 +85,16 @@ class StaticTrace(Trace):
             lineY[1].position += sf.Vector2(0, self.tileSize.y)
 
     def addTile(self, x, y, fromDnd = True):
-        print('x : ',x, 'y : ', y)
         dndDatas = TileBox.dndDatas
         if not dndDatas:
             return
-
         if not fromDnd and globalVar.sfmlArea.mode != "Print":
+            return
+
+        self.addTileFromDnd(x, y, dndDatas)
+
+    def addTileFromDnd(self, x, y, dndDatas):
+        if not dndDatas:
             return
 
         if x < self.shift.x or x > len(self.listStaticTile) * self.tileSize.x + self.shift.x or\
@@ -107,8 +112,15 @@ class StaticTrace(Trace):
                     TileBox.textureList[dndDatas['name']], dndDatas['fileName'])
 
         elif dndDatas['style'] == 'Object':
+            for x in range(int(dndDatas['numberCase'].x)):
+                if indice.x + x < len(self.listStaticTile):
+                    for y in range(int(dndDatas['numberCase'].y)):
+                        if indice.y + y < len(self.listStaticTile[x]):
+                            self.listStaticTile[indice.x + x][indice.y + y] = None
             self.listStaticTile[indice.x][indice.y]=ObjectTile(dndDatas['objectTexture'],\
-                    indice*self.tileSize+self.shift, dndDatas['name'])
+                    indice*self.tileSize+self.shift, dndDatas['name'], dndDatas['numberCase'])
+
+            print(self.listStaticTile[indice.x][indice.y].position)
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -131,7 +143,8 @@ class StaticTrace(Trace):
                             break
 
                 if self.controlKey and self.leftMousePress:
-                    self.addTile(globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y)))
+                    coord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
+                    self.addTile(coord.x, coord.y)
 
                 if globalVar.sfmlArea.mode == "Eraser":
                     self.removeTile(event.x, event.y)
@@ -142,19 +155,27 @@ class StaticTrace(Trace):
                 if self.tileMoving:
                     coord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
                     indice = sf.Vector2(min(\
-                            int(max((coord.x-self.shift.x, 0)) / self.tileSize.x),\
+                            int(max((self.tileMoving.position.x, self.shift.x)) / self.tileSize.x),\
                             len(self.listStaticTile)-1),\
                             \
-                            min(int(max((coord.y-self.shift.y), 0) / self.tileSize.y), \
+                            min(int(max((self.tileMoving.position.y), self.shift.y) / self.tileSize.y), \
                             len(self.listStaticTile[0])-1))
 
                     self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
+
+                    if type(self.tileMoving) is ObjectTile:
+                        print(self.tileMoving.numberCase)
+                        for x in range(int(self.tileMoving.numberCase.x)):
+                            if indice.x + x < len(self.listStaticTile):
+                                for y in range(int(self.tileMoving.numberCase.y)):
+                                    if indice.y + y < len(self.listStaticTile[x]):
+                                        self.listStaticTile[indice.x + x][indice.y + y] = None
+
                     self.listStaticTile[indice.x][indice.y] = self.tileMoving
 
 
                     self.tileMoving.position = self.tileSize * indice + self.shift
 
-                    print(indice)
 
         if event.type == Gdk.EventType.KEY_PRESS:
             if event.get_keyval()[1] ==  Gdk.KEY_Control_L:
@@ -180,8 +201,10 @@ class StaticTrace(Trace):
             return
         self.drawQuad()
         for tile in [tile for content in self.listStaticTile for tile in content]:
-            if tile:
+            if tile and tile is not self.tileMoving:
                 tile.update()
+        if self.tileMoving:
+            self.tileMoving.update()
 
     def initStaticList(self, size):
         for x in range(0, int(size.x/self.tileSize.x)):
@@ -194,19 +217,18 @@ class StaticTrace(Trace):
                         break
                     x.append(None)
 
-        print(len(self.listStaticTile), len(self.listStaticTile[0]))
-
     def removeTile(self, x, y):
         coord = globalVar.sfmlArea.convertCoord(sf.Vector2(x, y))
         indice = sf.Vector2(\
-                int((coord.x+self.shift.x)/self.tileSize.x), int((coord.y+self.shift.y)/self.tileSize.y))
+                int((coord.x-self.shift.x)/self.tileSize.x), int((coord.y-self.shift.y)/self.tileSize.y))
+
         if len(self.listStaticTile) > indice.x and len(self.listStaticTile[indice.x]) > indice.y:
             self.listStaticTile[indice.x][indice.y] = None
 
 
 class DynamicTrace(Trace):
-    def __init__(self):
-        Trace.__init__(self)
+    def __init__(self, name):
+        Trace.__init__(self, name)
         self.listDynamicTile = list()
         self.style="Dynamic"
 
@@ -214,8 +236,12 @@ class DynamicTrace(Trace):
         if not Trace.update(self):
             return
         for tile in self.listDynamicTile:
-            if tile:
+            if tile is not self.tileMoving:
                 tile.update()
+
+        if self.tileMoving:
+            self.tileMoving.update
+
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -360,7 +386,7 @@ class DynamicTile(Tile):
         self.animName = animName
 
 class ObjectTile():
-    def __init__(self, texture, position, name, sfmlRenderer = "sfmlArea"):
+    def __init__(self, texture, position, name, numberCase, sfmlRenderer = "sfmlArea"):
         self.name = name
         self.sprite = sf.Sprite(texture)
         if sfmlRenderer == 'sfmlArea':
@@ -368,6 +394,7 @@ class ObjectTile():
         else:
             self.sfmlRenderer = sfmlRenderer
         self.position = position
+        self.numberCase = numberCase
 
     def update(self):
         if self.sfmlRenderer:

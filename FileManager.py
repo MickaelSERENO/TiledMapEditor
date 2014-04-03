@@ -33,6 +33,9 @@ class FileManager():
         globalVar.tileWindow.decodeXML(xmlRoot.find('Window'))
         tileBox.decodeXML(xmlRoot.find('Files'), path.dirname(fileName))
         objectManager.decodeXML(xmlRoot.find('Objects'), tileBox)
+        traceManager.decodeXML(xmlRoot.find('Trace'), tileBox, objectManager)
+
+        self.xmlFile = fileName
 
     def openFileImage(self):
         return self._openFile('image')
@@ -53,7 +56,6 @@ class FileManager():
         xmlRoot.append(objectManager.getSaveFileElem(tileBox))
         xmlRoot.append(traceManager.getSaveFileElem(tileBox, objectManager))
 
-        print(self.xmlFile)
         with open(self.xmlFile, 'w') as xmlFile:
             xmlFile.write(str(ET.tostring(xmlRoot).decode()))
 

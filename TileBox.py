@@ -4,9 +4,10 @@ from copy import copy
 import shutil
 import sfml as sf
 import xml.etree.ElementTree as ET
+from collections import OrderedDict
 
 class TileBox(Gtk.ScrolledWindow):
-    textureList = dict()
+    textureList = OrderedDict()
     dndDatas = None
     def __init__(self):
         Gtk.ScrolledWindow.__init__(self)
@@ -25,7 +26,7 @@ class TileBox(Gtk.ScrolledWindow):
         self.animationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         animationExpander.add(self.animationBox)
 
-        self.dynamicDict = dict()
+        self.dynamicDict = OrderedDict()
         self.staticList = []
 
         self.box.pack_start(animationExpander, True, True, 0)
@@ -45,8 +46,8 @@ class TileBox(Gtk.ScrolledWindow):
         for child in self.animationBox.get_children():
             self.animationBox.remove(child)
         self.staticList = []
-        self.dynamicDict = dict()
-        TileBox.textureList = dict()
+        self.dynamicDict = OrderedDict()
+        TileBox.textureList = OrderedDict()
 
     def makeActionMenu(self, actionGroup):
         self.propAction = Gtk.Action("TileProperties", "Properties", None, None)
@@ -169,7 +170,7 @@ class TileBox(Gtk.ScrolledWindow):
                     self.popupMenu.popup(None, None, None, None, event.button, event.time)
 
     def makeWindowProperty(self, button, iconView, event):
-        widgets = dict()
+        widgets = OrderedDict()
         iterTileSelected = iconView.get_model().get_iter(iconView.get_selected_items()[0])
         tile = iconView.get_model().get_value(iterTileSelected, 0)
         widgets['tile'] = tile
@@ -266,12 +267,23 @@ class TileBox(Gtk.ScrolledWindow):
                 return len(self.staticList)+l.index(fileName)
         return -1
 
+    def getFileName(self, fileID):
+        if fileID < len(self.staticList):
+            return self.staticList[fileID].fileName
+        
+        l=list(self.dynamicDict.keys())
+        i = 0
+        for fileName in l:
+            if i == fileID - len(self.staticList):
+                return l[i]
+            i = i+1
+
     def decodeXML(self, element, path):
         listStaticElement = element.findall('Static')
         listDynamicElement = element.findall('Dynamic')
 
         for staticElement in listStaticElement:
-            elemValues = dict()
+            elemValues = OrderedDict()
             for staticItems in staticElement.items():
                 elemValues[staticItems[0]] = staticItems[1]
             tileSizeSplit = elemValues['tileSize'].split('x')
@@ -293,7 +305,7 @@ class TileBox(Gtk.ScrolledWindow):
                 tile = self.staticList[-1].get_model().get_value(\
                         self.staticList[-1].get_model().get_iter(treeModelRow.path), 0)
 
-                tileValues = dict()
+                tileValues = OrderedDict()
                 for tileItems in staticTileElement.items(): 
                     tileValues[tileItems[0]] = tileItems[1]
 
@@ -301,8 +313,8 @@ class TileBox(Gtk.ScrolledWindow):
                 tile.type = tileValues['type']
 
         for dynamicElement in listDynamicElement:
-            dynamicValuesElement = dict()
-            tileValueDict = dict()
+            dynamicValuesElement = OrderedDict()
+            tileValueDict = OrderedDict()
             iterAnimationPassFirst = False
 
             treeStoreAnnim = Gtk.TreeStore(str, str, str, str, str)
@@ -318,7 +330,7 @@ class TileBox(Gtk.ScrolledWindow):
                     iterAnimationPassFirst=True
                     continue
 
-                animationValuesEntity = dict()
+                animationValuesEntity = OrderedDict()
                 for animationItem in animationEntity.items():
                     animationValuesEntity[animationItem[0]] = animationItem[1]
 
@@ -334,7 +346,7 @@ class TileBox(Gtk.ScrolledWindow):
                         iterTilePassFirst=True
                         continue
 
-                    tileValuesEntity = dict()
+                    tileValuesEntity = OrderedDict()
                     for tileItem in tileEntity.items():
                         tileValuesEntity[tileItem[0]] = tileItem[1]
 
@@ -373,6 +385,7 @@ class TileBox(Gtk.ScrolledWindow):
             for dynamicIconView in self.dynamicDict.values():
                 if i == fileID-len(self.staticList):
                     return dynamicIconView.getDndDatasFromPath(tileID)
+                i=i+1
 
 class DragIconView(Gtk.IconView):
     def __init__(self, model, numColumn, fileName):

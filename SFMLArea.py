@@ -160,6 +160,9 @@ class SFMLArea(Gtk.DrawingArea):
 
     def do_drag_data_received(self, widget, context, x, y, selection_data, info, time=None):
         if time:
+            if x > self.size.x or y > self.size.y:
+                return
+
             for trace in self.listTrace[::-1]:
                 if trace.show:
                     pos = self.convertCoord(sf.Vector2(x, y))
@@ -199,12 +202,12 @@ class SFMLArea(Gtk.DrawingArea):
             self.updateLastEventTrace(event)
 
 
-    def addStaticTrace(self, tileSize, shift):
-        self.listTrace.append(StaticTrace(tileSize, shift))
+    def addStaticTrace(self, tileSize, shift, name):
+        self.listTrace.append(StaticTrace(tileSize, shift, name))
         self.listTrace[-1].initStaticList(self.size - shift)
 
-    def addDynamicTrace(self):
-        self.listTrace.append(DynamicTrace())
+    def addDynamicTrace(self, name):
+        self.listTrace.append(DynamicTrace(name))
 
 class SFMLMakeObject(Gtk.DrawingArea):
     def __init__(self, tileSize, numberCase, nameObject):
