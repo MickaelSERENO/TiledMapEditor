@@ -7,7 +7,7 @@ from TraceTile import StaticTrace, Tile, DynamicTrace
 import globalVar
 
 class SFMLArea(Gtk.DrawingArea):
-    def __init__(self, hslide, vslide, numberCases, sizeCase):
+    def __init__(self, hslide, vslide, numberCases, sizeCase, miniMap):
         Gtk.DrawingArea.__init__(self)
         self.hslide = hslide
         self.vslide = vslide
@@ -16,6 +16,10 @@ class SFMLArea(Gtk.DrawingArea):
         self.sizeCase = sizeCase
         self.numberCases = numberCases
         self.set_can_focus(True)
+
+        self.miniMap = miniMap
+        self.miniMapSprite = None
+        self.miniMapRenderTexture = None
 
         self.connect("drag-data-received", self.do_drag_data_received)
         self.connect("key-press-event", self.keyPressEvent)
@@ -54,6 +58,7 @@ class SFMLArea(Gtk.DrawingArea):
         self.render.size.y = min(self.render.size.y, self.size.y)
         self.render.view.size = copy(self.render.size)
         self.get_toplevel().show_all()
+        self.updateMiniMap()
         self.updateSlideValues()
 
     def setScrollSizeAllocated(self, widget, allocation, scroll):
@@ -62,7 +67,6 @@ class SFMLArea(Gtk.DrawingArea):
 
         else:
             self.hslide.set_min_slider_size(allocation.width*self.render.view.size.x/self.size.x)
-
 
     def setMode(self, mode):
         self.mode = mode
@@ -76,6 +80,8 @@ class SFMLArea(Gtk.DrawingArea):
         self.setScrollSizeAllocated(self.vslide, self.vslide.get_allocation(), "vertical")
         self.setScrollSizeAllocated(self.hslide, self.hslide.get_allocation(), "horizontal")
 
+        self.miniMap.update(self.miniMapSprite, self.render.view.center - self.render.view.size/2,\
+                self.render.view.size)
     def moveView(self, scroll, orientation):
         vector = sf.Vector2()
         if orientation == "vertical":
@@ -142,7 +148,6 @@ class SFMLArea(Gtk.DrawingArea):
                     self.size.y / self.render.view.size.y))
             self.updateSlideValues()
 
-
     def draw(self):
         self.render.empty_event_loop()
         self.render.clear()
@@ -208,6 +213,26 @@ class SFMLArea(Gtk.DrawingArea):
 
     def addDynamicTrace(self, name):
         self.listTrace.append(DynamicTrace(name))
+
+    def updateMiniMap(self):
+        print(self.size.x, self.size.y)
+        self.miniMapRenderTexture = sf.RenderTexture(self.size.x, self.size.y)
+        self.miniMapRenderTexture.clear(sf.Color(0,0,0,0))
+        for trace in self.listTrace:
+            if type(trace) == StaticTrace:
+                for row in trace.listStaticTile:
+                    for tile in row:
+                        if tile:
+                            self.miniMapRenderTexture.draw(tile.sprite)
+            elif type(trace) == DynamicTrace:
+                for tile in trace.listDynamicTile:
+                    if tile:
+                        self.miniMapRenderTexture.draw(tile.sprite)
+
+        self.miniMapRenderTexture.display()
+        self.miniMapSprite = sf.Sprite(self.miniMapRenderTexture.texture)
+        self.miniMap.update(self.miniMapSprite,self.render.view.center - self.render.view.size/2,\
+                self.render.view.size)
 
 class SFMLMakeObject(Gtk.DrawingArea):
     def __init__(self, tileSize, numberCase, nameObject):

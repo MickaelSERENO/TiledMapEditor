@@ -2,7 +2,7 @@ from gi.repository import Gtk, Gdk, GObject
 import sfml as sf
 from TileBox import TileBox
 from copy import copy
-import functions
+from functions import *
 import globalVar
 
 class Trace:
@@ -120,7 +120,7 @@ class StaticTrace(Trace):
             self.listStaticTile[indice.x][indice.y]=ObjectTile(dndDatas['objectTexture'],\
                     indice*self.tileSize+self.shift, dndDatas['name'], dndDatas['numberCase'])
 
-            print(self.listStaticTile[indice.x][indice.y].position)
+        globalVar.sfmlArea.updateMiniMap()
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -131,7 +131,7 @@ class StaticTrace(Trace):
                     for i in range(len(self.listStaticTile)):
                         for j in range(len(self.listStaticTile[0])):
                             if self.listStaticTile[i][j]:
-                                if functions.isMouseInRect(globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y)),\
+                                if isMouseInRect(globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y)),\
                                         self.listStaticTile[i][j].rect):
                                     self.tileMoving = self.listStaticTile[i][j]
                                     self.indiceTile = sf.Vector2(i, j)
@@ -173,8 +173,8 @@ class StaticTrace(Trace):
 
                     self.listStaticTile[indice.x][indice.y] = self.tileMoving
 
-
                     self.tileMoving.position = self.tileSize * indice + self.shift
+                    globalVar.sfmlArea.updateMiniMap()
 
 
         if event.type == Gdk.EventType.KEY_PRESS:
@@ -196,10 +196,11 @@ class StaticTrace(Trace):
 
         Trace.updateEventTile(self, event)
 
-    def update(self):
+    def update(self, drawQuad = True):
         if not Trace.update(self):
             return
-        self.drawQuad()
+        if drawQuad:
+            self.drawQuad()
         for tile in [tile for content in self.listStaticTile for tile in content]:
             if tile and tile is not self.tileMoving:
                 tile.update()
@@ -247,7 +248,7 @@ class DynamicTrace(Trace):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
                 for tile in self.listDynamicTile[::-1]:
-                    if functions.isMouseInRect(sf.Vector2(event.x, event.y),\
+                    if isMouseInRect(sf.Vector2(event.x, event.y),\
                             tile.rect):
                         self.tileMoving = tile
                         self.posMoving = sf.Vector2(event.x, event.y) - tile.position
@@ -256,11 +257,11 @@ class DynamicTrace(Trace):
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if self.tileMoving:
                 self.tileMoving.position = sf.Vector2(event.x, event.y) - self.posMoving
+                globalVar.sfmlArea.updateMiniMap()
  
         Trace.updateEventTile(self, event)
 
     def addTile(self, x, y):
-        print("ok")
         self.makeAddTileWindowPrompt(x, y)
 
     def makeAddTileWindowPrompt(self, x, y):
@@ -336,6 +337,8 @@ class DynamicTrace(Trace):
             self.listDynamicTile.append(ObjectTile(dndDatas['objectTexture'],\
                     sf.Vector2(x, y), dndDatas['name']))
 
+        globalVar.sfmlArea.updateMiniMap()
+
     def confirmDynamicTile(self, button, widgets):
         dndDatas = TileBox.dndDatas
         origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
@@ -343,6 +346,8 @@ class DynamicTrace(Trace):
                 widgets['timeEntry'].get_value(), origin, widgets['position'],\
                 dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\
                 dndDatas['animName']))
+
+        globalVar.sfmlArea.updateMiniMap()
         if 'window' in widgets:
             widgets['window'].destroy()
 
@@ -361,7 +366,10 @@ class Tile:
             self.sfmlRenderer = sfmlRenderer
 
     def update(self):
-        self.sfmlRenderer.render.draw(self.sprite)
+        if self.sfmlRenderer and rectCollision(self.rect, \
+                sf.Rectangle(self.sfmlRenderer.render.view.center - self.sfmlRenderer.render.view.size/2, \
+                self.sfmlRenderer.render.view.size)):
+            self.sfmlRenderer.render.draw(self.sprite)
 
     def setPosition(self, position):
         self.sprite.position = position
@@ -397,7 +405,9 @@ class ObjectTile():
         self.numberCase = numberCase
 
     def update(self):
-        if self.sfmlRenderer:
+        if self.sfmlRenderer and rectCollision(self.rect, \
+                sf.Rectangle(self.sfmlRenderer.render.view.center - self.sfmlRenderer.render.view.size/2, \
+                self.sfmlRenderer.render.view.size)):
             self.sfmlRenderer.render.draw(self.sprite)
 
     def setPosition(self, position):

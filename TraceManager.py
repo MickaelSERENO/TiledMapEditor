@@ -23,7 +23,7 @@ class TraceManager(Gtk.Box):
         self.pack_start(self.treeView, True, True, 0)
 
         self.buildMenu()
-        self.set_size_request(100, 300)
+        self.set_size_request(100, 250)
 
     def buildMenu(self):
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)

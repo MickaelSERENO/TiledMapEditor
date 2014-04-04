@@ -11,6 +11,7 @@ from CreateMenu import CreateMenu
 from TileBox import TileBox
 from TraceManager import TraceManager
 from ObjectManager import *
+from MiniMap import *
 import xml.etree.ElementTree as ET
 import sfml as sf
 
@@ -24,23 +25,33 @@ class TileWindow(Gtk.Window):
         self.tileBox = TileBox()
         self.traceManager = TraceManager()
         self.objectManager = ObjectManager()
-        self.sfmlTilePanned = Gtk.Paned()
-        self.sfmlTilePanned.pack1(self.tileBox)
+        self.sfmlTilePaned = Gtk.Paned()
+        self.sfmlTilePaned.pack1(self.tileBox)
 
-        self.toolPanned = Gtk.Paned(orientation = Gtk.Orientation.VERTICAL)
-        self.toolPanned.pack1(self.traceManager)
-        self.toolPanned.add2(self.objectManager)
-        self.toolPanned.set_size_request(200, 600)
+        self.toolNotebook = Gtk.Notebook()
+        self.toolNotebook.append_page(self.traceManager, Gtk.Label("Trace Manager"))
+        self.toolNotebook.set_size_request(200,200)
+        self.miniMap = MiniMap(self.toolNotebook)
+
+        self.toolPaned = Gtk.Paned(orientation = Gtk.Orientation.VERTICAL)
+        self.toolPaned.add1(self.toolNotebook)
+        self.toolPaned.add2(self.objectManager)
+        self.toolPaned.connect('notify::position', self.handleToolPanedMoving)
+        self.toolPaned.set_property('position-set', True)
+        self.toolPaned.set_position(400)
 
         self.sfmlBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.sfmlTilePanned.add2(self.sfmlBox)
-        self.sfmlTilePanned.set_size_request(500, 300)
+        self.sfmlTilePaned.add2(self.sfmlBox)
+        self.sfmlTilePaned.set_size_request(500, 300)
 
         globalVar.sfmlArea = None
 
-        panedTraceManager = Gtk.Paned()
-        panedTraceManager.add1(self.sfmlTilePanned)
-        panedTraceManager.pack2(self.toolPanned, False, True)
+        self.panedSFML_toolPaned = Gtk.Paned()
+        self.panedSFML_toolPaned.add1(self.sfmlTilePaned)
+        self.panedSFML_toolPaned.pack2(self.toolPaned, False, True)
+        self.panedSFML_toolPaned.connect('notify::position', self.handleToolPanedMoving)
+        self.panedSFML_toolPaned.set_property('position-set', True)
+        self.panedSFML_toolPaned.set_position(600)
         self.set_default_size(800, 600)
 
         self.actionGroup = Gtk.ActionGroup("Actions")
@@ -59,11 +70,13 @@ class TileWindow(Gtk.Window):
         vbox.pack_start(self.uiManager.get_widget("/ToolBar"), False, False, 0)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        hbox.pack_start(panedTraceManager, True, True, 0)
+        hbox.pack_start(self.panedSFML_toolPaned, True, True, 0)
         vbox.pack_start(hbox, True, True, 0)
 
         self.traceManager.connectToolButton(self)
         self.tileBox.makePopupMenu(self.uiManager)
+
+        self.mode = None
 
         self.show_all()
 
@@ -79,7 +92,7 @@ class TileWindow(Gtk.Window):
         hSlide = Gtk.HScrollbar()
 
         globalVar.sfmlArea = SFMLArea(hSlide, vSlide, \
-                        numberCase, size)
+                        numberCase, size, self.miniMap)
 
         hBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 
@@ -182,6 +195,9 @@ class TileWindow(Gtk.Window):
             self.fileManager.saveAsFile(self.tileBox, self.traceManager, self.objectManager)
         elif action=="save":
             self.fileManager.saveFile(self.tileBox, self.traceManager, self.objectManager)
+
+    def handleToolPanedMoving(self, widget, paramSpec):
+        self.miniMap.scalePixbuf()
     
     def newFile(self, widget):
         self.newContents.newFile(self.fileManager)
@@ -211,3 +227,4 @@ class TileWindow(Gtk.Window):
     def eraserManager(self, radioAction, current):
         if globalVar.sfmlArea:
             globalVar.sfmlArea.setMode(current.get_name())
+        self.mode = current.get_name()

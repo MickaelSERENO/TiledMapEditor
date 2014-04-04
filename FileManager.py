@@ -27,6 +27,9 @@ class FileManager():
 
     def openFileXML(self, tileBox, traceManager, objectManager):
         fileName = self._openFile("xml")
+
+        if not fileName:
+            return
         xmlTree = ET.parse(fileName)
         xmlRoot = xmlTree.getroot()
 
