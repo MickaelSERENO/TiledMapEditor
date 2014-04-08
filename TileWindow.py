@@ -35,7 +35,7 @@ class TileWindow(Gtk.Window):
 
         self.toolPaned = Gtk.Paned(orientation = Gtk.Orientation.VERTICAL)
         self.toolPaned.add1(self.toolNotebook)
-        self.toolPaned.add2(self.objectManager)
+        self.toolPaned.pack2(self.objectManager)
         self.toolPaned.connect('notify::position', self.handleToolPanedMoving)
         self.toolPaned.set_property('position-set', True)
         self.toolPaned.set_position(400)

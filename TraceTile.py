@@ -164,7 +164,6 @@ class StaticTrace(Trace):
                     self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
 
                     if type(self.tileMoving) is ObjectTile:
-                        print(self.tileMoving.numberCase)
                         for x in range(int(self.tileMoving.numberCase.x)):
                             if indice.x + x < len(self.listStaticTile):
                                 for y in range(int(self.tileMoving.numberCase.y)):
@@ -179,7 +178,6 @@ class StaticTrace(Trace):
 
         if event.type == Gdk.EventType.KEY_PRESS:
             if event.get_keyval()[1] ==  Gdk.KEY_Control_L:
-                print("val")
                 self.controlKey = True
 
         if event.type == Gdk.EventType.KEY_RELEASE:

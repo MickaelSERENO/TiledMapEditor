@@ -8,6 +8,7 @@ import platform
 import xml.etree.ElementTree as ET
 import csv
 from collections import OrderedDict
+from copy import copy
 if platform.system() == "Linux":
     from gi.repository import GdkX11
 elif platform.system() == "Windows":
@@ -17,14 +18,20 @@ class ObjectManager(Gtk.Box):
     objectTexture = OrderedDict()
     def __init__(self):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
+
+        self.scrolledWindow = Gtk.ScrolledWindow()
+        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.objectDict = OrderedDict()
         self.expanderDict = OrderedDict()
         self.typeList = list()
         self.numColumn = 2
         self.expanderBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.pack_start(self.expanderBox, True, True, 0)
+        self.box.pack_start(self.expanderBox, True, True, 0)
         self.buttonBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        self.pack_start(self.buttonBox, True, True, 0)
+        self.box.pack_start(self.buttonBox, True, True, 0)
+
+        self.pack_start(self.scrolledWindow, True, True, 0)
+        self.scrolledWindow.add(self.box)
 
     def promptAddObject(self, button):
         window = Gtk.Window(title="Add Object")
@@ -205,14 +212,14 @@ class ObjectManager(Gtk.Box):
             self.expanderDict[typeName].add(viewIcon)
             self.typeList.append(typeName)
 
-        model = self.expanderDict[typeName].get_child().get_model()
-
-        image = texture.to_image()
-        pix = ObjectTileIcon.new(image.pixels.data, image.width, image.height, title, numberCase)
-        model.append(None, [pix, title])
-        self.expanderBox.pack_start(self.expanderDict[typeName], False, False, 0)
         ObjectManager.objectTexture[title] = texture.copy()
+        model = self.expanderDict[typeName].get_child().get_model()
+        image = ObjectManager.objectTexture[title].to_image()
+    
+        self.pix = ObjectTileIcon.new(texture.copy().to_image(), title, numberCase)
 
+        model.append(None, [self.pix, title])
+        self.expanderBox.pack_start(self.expanderDict[typeName], False, False, 0)
         self.get_toplevel().show_all()
 
     def quitWindow(self, button, window):
@@ -316,9 +323,14 @@ class ObjectManager(Gtk.Box):
         return None
 
 class ObjectTileIcon(GdkPixbuf.Pixbuf):
-    def new(data, width, height, name, numberCase):
-        objet = GdkPixbuf.Pixbuf.new_from_data(data, GdkPixbuf.Colorspace.RGB, True, 8, width, height, \
-                4*width, None, None)
+    def new(image, name, numberCase):
+        pix = GdkPixbuf.Pixbuf.new_from_data(image.pixels.data, GdkPixbuf.Colorspace.RGB,\
+                True, 8, image.width, image.height, \
+                4*image.width, None, None)
+
+        objet = pix.scale_simple(image.width, image.height, GdkPixbuf.InterpType.BILINEAR)
+        objet.image = image
+
         objet.name = name 
         objet.numberCase = numberCase
         return objet

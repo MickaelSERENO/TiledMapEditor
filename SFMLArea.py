@@ -92,6 +92,8 @@ class SFMLArea(Gtk.DrawingArea):
                     (self.render.view.center.x - self.render.view.size.x / 2)
 
         self.render.view.move(vector.x, vector.y)
+        self.miniMap.update(self.miniMapSprite, self.render.view.center - self.render.view.size/2,\
+                self.render.view.size)
 
     def makePopupAction(self, actionGroup):
         actionGroup.get_action("DelCase").connect("activate", self.manageTile, "delete")
@@ -215,7 +217,6 @@ class SFMLArea(Gtk.DrawingArea):
         self.listTrace.append(DynamicTrace(name))
 
     def updateMiniMap(self):
-        print(self.size.x, self.size.y)
         self.miniMapRenderTexture = sf.RenderTexture(self.size.x, self.size.y)
         self.miniMapRenderTexture.clear(sf.Color(0,0,0,0))
         for trace in self.listTrace:
@@ -228,6 +229,7 @@ class SFMLArea(Gtk.DrawingArea):
                 for tile in trace.listDynamicTile:
                     if tile:
                         self.miniMapRenderTexture.draw(tile.sprite)
+
 
         self.miniMapRenderTexture.display()
         self.miniMapSprite = sf.Sprite(self.miniMapRenderTexture.texture)
