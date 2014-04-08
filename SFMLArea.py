@@ -208,7 +208,6 @@ class SFMLArea(Gtk.DrawingArea):
         if event.type == Gdk.EventType.MOTION_NOTIFY:
             self.updateLastEventTrace(event)
 
-
     def addStaticTrace(self, tileSize, shift, name):
         self.listTrace.append(StaticTrace(tileSize, shift, name))
         self.listTrace[-1].initStaticList(self.size - shift)
@@ -239,12 +238,22 @@ class SFMLArea(Gtk.DrawingArea):
 class SFMLMakeObject(Gtk.DrawingArea):
     def __init__(self, tileSize, numberCase, nameObject):
         Gtk.DrawingArea.__init__(self)
+        self.set_can_focus(True)
         self.tileSize = tileSize
         self.numberCase = numberCase
         self.render = sf.HandledWindow()
         self.size = tileSize*numberCase
         self.listTile = list()
         self.nameObject = nameObject
+
+        self.tileMoving = None
+        self.posMoving = None
+        self.indiceTile = None
+
+        self.connect("motion_notify_event", self.mouseMoveEvent) 
+        self.connect("button-press-event", self.buttonPressEvent)
+        self.connect("button-release-event", self.buttonReleaseEvent)
+        self.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
 
         for i in range(numberCase.x):
             self.listTile.append(list())
@@ -263,8 +272,8 @@ class SFMLMakeObject(Gtk.DrawingArea):
     def update(self):
         self.render.empty_event_loop()
         self.render.clear()
-        for tileList in self.listTile:
-            for tile in tileList:
+        for listTile in self.listTile:
+            for tile in listTile:
                 if tile:
                     tile.update()
         self.drawQuad()
@@ -272,14 +281,61 @@ class SFMLMakeObject(Gtk.DrawingArea):
         return True
 
     def do_drag_data_received(self, context, x, y, selection_data, info, time=None):
-        pos = self.render.map_pixel_to_coords(sf.Vector2(x, y), self.render.view)
         dndDatas = TileBox.dndDatas
+        if dndDatas["style"] == "Object":
+            return
+
+        pos = self.render.map_pixel_to_coords(sf.Vector2(x, y), self.render.view)
         indice = sf.Vector2(\
                 int(pos.x/self.tileSize.x), int(pos.y/self.tileSize.y))
-
+        
         self.listTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
                 indice*self.tileSize, dndDatas['subRect'],\
                 TileBox.textureList[dndDatas['name']], dndDatas['fileName'], True, self)
+
+    def mouseMoveEvent(self, widget, event):
+        if self.tileMoving:
+            self.tileMoving.position = sf.Vector2(event.x, event.y)
+
+    def buttonPressEvent(self, widget, event):
+        if event.button == 1:
+            print(event.x, event.y)
+            if len(self.listTile) and globalVar.tileWindow.mode == "Print":
+                b = False
+                for i in range(len(self.listTile)):
+                    for j in range(len(self.listTile[0])):
+                        if self.listTile[i][j]:
+                            if isMouseInRect(sf.Vector2(event.x, event.y),\
+                                    self.listTile[i][j].rect):
+                                self.tileMoving = self.listTile[i][j]
+                                self.indiceTile = sf.Vector2(i, j)
+                                self.posMoving = sf.Vector2(event.x, event.y) -\
+                                        self.tileMoving.position
+                                b=True
+                                break
+                    if b:
+                        break
+
+            elif globalVar.tileWindow.mode == "Eraser":
+                self.removeTile(event.x, event.y)
+
+    def buttonReleaseEvent(self, widget, event):
+        if event.button == 1:
+            if self.tileMoving:
+                coord = sf.Vector2(event.x, event.y)
+                indice = sf.Vector2(int(event.x/self.tileSize.x), int(event.y/self.tileSize.y))
+
+                self.listTile[self.indiceTile.x][self.indiceTile.y] = None
+                self.listTile[indice.x][indice.y] = self.tileMoving
+
+                self.tileMoving.position = self.tileSize * indice
+                self.tileMoving = None
+
+    def removeTile(self, x, y):
+        indice = sf.Vector2(int(x/self.tileSize.x), int(y/self.tileSize.y))
+
+        if len(self.listTile) > indice.x and len(self.listTile[indice.x]) > indice.y:
+            self.listTile[indice.x][indice.y] = None
 
     def drawQuad(self):
         position = sf.Vector2(0, 0)
