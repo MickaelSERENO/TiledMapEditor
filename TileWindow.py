@@ -38,7 +38,7 @@ class TileWindow(Gtk.Window):
         self.toolPaned.pack2(self.objectManager)
         self.toolPaned.connect('notify::position', self.handleToolPanedMoving)
         self.toolPaned.set_property('position-set', True)
-        self.toolPaned.set_position(400)
+        self.toolPaned.set_position(300)
 
         self.sfmlBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.sfmlTilePaned.add2(self.sfmlBox)
@@ -80,7 +80,6 @@ class TileWindow(Gtk.Window):
 
         self.show_all()
 
-
     def buildSFMLArea(self, numberCase, size):
         if globalVar.sfmlArea:
             self.traceManager.clearTrace()
@@ -116,6 +115,7 @@ class TileWindow(Gtk.Window):
         for mode in ["Print", "Eraser"]:
             if self.actionGroup.get_action(mode).get_active():
                 globalVar.sfmlArea.mode = mode
+                self.mode = mode
                 break
 
     def makeFileMenuAction(self, actionGroup):
@@ -168,7 +168,7 @@ class TileWindow(Gtk.Window):
         actionGroup.add_action_with_accel(self.zoomOut, None)
 
         actionGroup.add_radio_actions([("Print", None, None, "p", None, 0), \
-                ("Eraser", None, None, "e", None, 0)], "active", self.eraserManager)
+                ("Eraser", None, None, "e", None, 0)], "active", self.radioActionManager)
 
         actionGroup.get_action("Print").set_icon_name("pencil")
         actionGroup.get_action("Eraser").set_icon_name("eraser")
@@ -224,7 +224,7 @@ class TileWindow(Gtk.Window):
 
         self.set_title(windowValuesElement['title'])
 
-    def eraserManager(self, radioAction, current):
+    def radioActionManager(self, radioAction, current):
         if globalVar.sfmlArea:
             globalVar.sfmlArea.setMode(current.get_name())
         self.mode = current.get_name()
