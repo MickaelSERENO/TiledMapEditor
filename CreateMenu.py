@@ -577,4 +577,5 @@ class CreateMenu:
         globalVar.tileWindow.fileManager.xmlFile = 'Files/'+globalVar.tileWindow.get_title()+'.xml'
         window = widgets['window']
         del widgets['window']
+        print("fin init")
         window.destroy()

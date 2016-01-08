@@ -38,6 +38,7 @@
 
 	<popup name="SFMLFullCase">
 		<menuitem action="DelCase"/>
+		<menuitem action="SetTileProperties"/>
 	</popup>
 
 	<popup name="TilePopup">

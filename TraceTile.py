@@ -32,6 +32,9 @@ class Trace:
     def drawQuad(self):
         return
 
+    def getTile(self, coord):
+        return
+
 class StaticTrace(Trace):
     def __init__(self, tileSize, shift, name):
         Trace.__init__(self, name)
@@ -107,16 +110,22 @@ class StaticTrace(Trace):
             return
 
         if dndDatas['style']=='Static':
+            self.deleteObjectInListForStatic(indice)
+                        
             self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
                     indice*self.tileSize+self.shift, dndDatas['subRect'],\
                     TileBox.textureList[dndDatas['name']], dndDatas['fileName'])
 
         elif dndDatas['style'] == 'Object':
+            self.deleteObjectInListForObject(indice, dndDatas['name'])
+            tileID = globalVar.tileWindow.objectManager.objectDict[dndDatas['name']].tileID
             for x in range(int(dndDatas['numberCase'].x)):
                 if indice.x + x < len(self.listStaticTile):
                     for y in range(int(dndDatas['numberCase'].y)):
                         if indice.y + y < len(self.listStaticTile[x]):
-                            self.listStaticTile[indice.x + x][indice.y + y] = None
+                            if tileID[x][y] != -1:
+                                self.listStaticTile[indice.x + x][indice.y + y] = None
+
             self.listStaticTile[indice.x][indice.y]=ObjectTile(dndDatas['objectTexture'],\
                     indice*self.tileSize+self.shift, dndDatas['name'], dndDatas['numberCase'])
 
@@ -133,8 +142,21 @@ class StaticTrace(Trace):
                             if self.listStaticTile[i][j]:
                                 if isMouseInRect(globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y)),\
                                         self.listStaticTile[i][j].rect):
+                                    indice = sf.Vector2(i, j)
+                                    if type(self.listStaticTile[i][j]) == ObjectTile:
+                                        obj = self.listStaticTile[i][j]
+                                        eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
+                                        objIndice = sf.Vector2(int((eventCoord.x-self.shift.x)/self.tileSize.x), int((eventCoord.y-self.shift.y)/self.tileSize.y))
+                                        tileID = globalVar.tileWindow.objectManager.objectDict[obj.name].tileID
+                                        print(tileID)
+                                        print(objIndice)
+                                        print(indice)
+                                        print(objIndice-indice)
+                                        if tileID[objIndice.x-indice.x][objIndice.y-indice.y] == -1:
+                                            continue
+
                                     self.tileMoving = self.listStaticTile[i][j]
-                                    self.indiceTile = sf.Vector2(i, j)
+                                    self.indiceTile = indice
                                     self.posMoving = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y)) -\
                                             self.tileMoving.position
                                     b=True
@@ -161,14 +183,18 @@ class StaticTrace(Trace):
                             min(int(max((self.tileMoving.position.y), self.shift.y) / self.tileSize.y), \
                             len(self.listStaticTile[0])-1))
 
-                    self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
+                    if type(self.tileMoving) is StaticTile:
+                        self.deleteObjectInListForStatic(indice)
 
-                    if type(self.tileMoving) is ObjectTile:
+                    elif type(self.tileMoving) is ObjectTile:
+                        self.deleteObjectInListForObject(indice, self.tileMoving.name)
+                        tileID = globalVar.tileWindow.objectManager.objectDict[self.tileMoving.name].tileID
                         for x in range(int(self.tileMoving.numberCase.x)):
                             if indice.x + x < len(self.listStaticTile):
                                 for y in range(int(self.tileMoving.numberCase.y)):
                                     if indice.y + y < len(self.listStaticTile[x]):
-                                        self.listStaticTile[indice.x + x][indice.y + y] = None
+                                        if tileID[x][y] != -1:
+                                            self.listStaticTile[indice.x + x][indice.y + y] = None
 
                     self.listStaticTile[indice.x][indice.y] = self.tileMoving
 
@@ -193,6 +219,27 @@ class StaticTrace(Trace):
                 self.addTile(coord.x, coord.y)
 
         Trace.updateEventTile(self, event)
+
+    def deleteObjectInListForStatic(self, indice):
+        for i in range(len(self.listStaticTile)):
+            for j in range(len(self.listStaticTile[i])):
+                if type(self.listStaticTile[i][j]) == ObjectTile:
+                    obj = self.listStaticTile[i][j]
+                    tileID = globalVar.tileWindow.objectManager.objectDict[obj.name].tileID
+
+                    objIndice = sf.Vector2(int((obj.position.x-self.shift.x)/self.tileSize.x), int((obj.position.y-self.shift.y)/self.tileSize.y))
+                    if objIndice.x <= indice.x and objIndice.y <= indice.y and\
+                            indice.x < objIndice.x + obj.numberCase.x and indice.y < objIndice.y + obj.numberCase.y:
+                        print(indice-objIndice)
+                        if tileID[indice.x-objIndice.x][indice.y-objIndice.y] != -1:
+                            self.listStaticTile[i][j] = None
+
+    def deleteObjectInListForObject(self, indice, name):
+        tileID = globalVar.tileWindow.objectManager.objectDict[name].tileID
+        for i in range(len(tileID)):
+            for j in range(len(tileID[i])):
+                if tileID[i][j] != -1:
+                    self.deleteObjectInListForStatic(indice + sf.Vector2(i, j))
 
     def update(self, drawQuad = True):
         if not Trace.update(self):
@@ -224,6 +271,11 @@ class StaticTrace(Trace):
         if len(self.listStaticTile) > indice.x and len(self.listStaticTile[indice.x]) > indice.y:
             self.listStaticTile[indice.x][indice.y] = None
 
+    def getTile(self, coord):
+        for tileList in self.listStaticTile:
+            for tile in tileList:
+                if tile and isMouseInRect(coord, tile.rect):
+                    return tile
 
 class DynamicTrace(Trace):
     def __init__(self, name):
@@ -349,6 +401,11 @@ class DynamicTrace(Trace):
         if 'window' in widgets:
             widgets['window'].destroy()
 
+    def getTile(self, coord):
+        for tile in self.listDynamicTile:
+            if isMouseInRect(coord, tile.rect):
+                return tile
+
 class Tile:
     def __init__(self, tileID, position, subRect, texture, fileName, madeByObject=False, \
             sfmlRenderer='sfmlArea'):
@@ -358,6 +415,10 @@ class Tile:
         self.sprite.position = position
         self.fileName = fileName
         self.madeByObject = madeByObject
+
+        self.data = dict()
+        self.typeData = dict()
+
         if sfmlRenderer == 'sfmlArea':
             self.sfmlRenderer = globalVar.sfmlArea
         else:
@@ -365,7 +426,7 @@ class Tile:
 
     def update(self):
         if self.sfmlRenderer and rectCollision(self.rect, \
-                sf.Rectangle(self.sfmlRenderer.render.view.center - self.sfmlRenderer.render.view.size/2, \
+                sf.Rect(self.sfmlRenderer.render.view.center - self.sfmlRenderer.render.view.size/2, \
                 self.sfmlRenderer.render.view.size)):
             self.sfmlRenderer.render.draw(self.sprite)
 
@@ -404,7 +465,7 @@ class ObjectTile():
 
     def update(self):
         if self.sfmlRenderer and rectCollision(self.rect, \
-                sf.Rectangle(self.sfmlRenderer.render.view.center - self.sfmlRenderer.render.view.size/2, \
+                sf.Rect(self.sfmlRenderer.render.view.center - self.sfmlRenderer.render.view.size/2, \
                 self.sfmlRenderer.render.view.size)):
             self.sfmlRenderer.render.draw(self.sprite)
 
@@ -424,6 +485,9 @@ class MakedObjectTile():
         self.nameObject = name
         self.numberCase = numberCase
         self.tileSize = tileSize
+
+        self.data = dict()
+        self.typeData = dict()
 
     def setPosition(self, position):
         self.sprite.position = position

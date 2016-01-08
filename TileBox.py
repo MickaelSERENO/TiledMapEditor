@@ -40,7 +40,7 @@ class TileBox(Gtk.ScrolledWindow):
     def makePopupMenu(self, uiManager):
         self.popupMenu =  uiManager.get_widget("/TilePopup")
 
-    def clearTile(self):
+    def clearAll(self):
         for child in self.staticBox.get_children():
             self.staticBox.remove(child)
         for child in self.animationBox.get_children():
@@ -81,7 +81,7 @@ class TileBox(Gtk.ScrolledWindow):
 
             while posY < originPixbuf.get_height():
                 pixbuf = TileIcon.new(GdkPixbuf.Colorspace.RGB, True, 8, size.x, size.y, \
-                        sf.Rectangle(sf.Vector2(posX, posY), size), tileID)
+                        sf.Rect(sf.Vector2(posX, posY), size), tileID)
 
                 originPixbuf.copy_area(posX, posY, min(size.x, originPixbuf.get_width() - posX), \
                         min(size.y, originPixbuf.get_height() - posY), pixbuf, 0, 0)
@@ -135,7 +135,7 @@ class TileBox(Gtk.ScrolledWindow):
                 sizeY = int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(animation, i), 4))
 
                 pixbuf = TileIcon.new(GdkPixbuf.Colorspace.RGB, True, 8, sizeX, sizeY, \
-                        sf.Rectangle(sf.Vector2(posX, posY), sf.Vector2(sizeX, sizeY)), \
+                        sf.Rect(sf.Vector2(posX, posY), sf.Vector2(sizeX, sizeY)), \
                         int(treeStoreAnnim.get_value(treeStoreAnnim.iter_nth_child(animation, i), 0)))
 
                 originPixbuf.copy_area(posX, posY, min(sizeX, originPixbuf.get_width() - posX), \

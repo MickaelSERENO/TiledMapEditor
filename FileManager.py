@@ -36,7 +36,7 @@ class FileManager():
         globalVar.tileWindow.decodeXML(xmlRoot.find('Window'))
         tileBox.decodeXML(xmlRoot.find('Files'), path.dirname(fileName))
         objectManager.decodeXML(xmlRoot.find('Objects'), tileBox)
-        traceManager.decodeXML(xmlRoot.find('Trace'), tileBox, objectManager)
+        traceManager.decodeXML(xmlRoot.find('Traces'), tileBox, objectManager)
 
         self.xmlFile = fileName
 

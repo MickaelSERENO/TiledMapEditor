@@ -1,5 +1,6 @@
 import platform
 import globalVar
+
 from gi.repository import Gtk, GObject, Gdk
 if platform.system() == "Linux":
     from gi.repository import GdkX11
@@ -48,7 +49,7 @@ class TileWindow(Gtk.Window):
 
         self.panedSFML_toolPaned = Gtk.Paned()
         self.panedSFML_toolPaned.add1(self.sfmlTilePaned)
-        self.panedSFML_toolPaned.pack2(self.toolPaned, False, True)
+        self.panedSFML_toolPaned.pack2(self.toolPaned, True, True)
         self.panedSFML_toolPaned.connect('notify::position', self.handleToolPanedMoving)
         self.panedSFML_toolPaned.set_property('position-set', True)
         self.panedSFML_toolPaned.set_position(600)
@@ -82,8 +83,9 @@ class TileWindow(Gtk.Window):
 
     def buildSFMLArea(self, numberCase, size):
         if globalVar.sfmlArea:
-            self.traceManager.clearTrace()
-            self.tileBox.clearTile()
+            self.traceManager.clearAll()
+            self.tileBox.clearAll()
+            self.objectManager.clearAll()
             for child in self.sfmlBox:
                 self.sfmlBox.remove(child)
 
@@ -175,7 +177,9 @@ class TileWindow(Gtk.Window):
 
     def makeSFMLMenuAction(self, actionGroup):
         delCase = Gtk.Action("DelCase", "Delete", None, None)
+        setTileProperties = Gtk.Action("SetTileProperties", "Set tile properties", None, None)
         actionGroup.add_action(delCase)
+        actionGroup.add_action(setTileProperties)
         
     def createUIManager(self):
         with open("Ressources/UI_INFO.xml", 'r') as info:
