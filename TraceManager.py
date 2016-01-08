@@ -101,14 +101,14 @@ class TraceManager(Gtk.Box):
             del globalVar.sfmlArea.listTrace[int(str(self.listStore.get_path(selected)))]
             del self.listStore[self.listStore.get_path(selected)]
 
-    def clearTrace(self):
+    def clearAll(self):
         self.listStore = Gtk.ListStore(bool, str)
         self.treeView.set_model(self.listStore)
         self.show_all()
 
     def getSaveFileElem(self, tileBox, objectManager):
         listTrace = globalVar.sfmlArea.listTrace
-        traceElem = ET.Element("Trace")
+        traceElem = ET.Element("Traces")
         for trace in listTrace:
             if trace.style == "Static":
                 staticTraceElem = ET.SubElement(traceElem, "StaticTrace")

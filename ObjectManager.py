@@ -167,7 +167,8 @@ class ObjectManager(Gtk.Box):
         widgets['window'].show()
 
     def addObject(self, button, widgets):
-        render = sf.RenderTexture(widgets['sfmlMakeObject'].size.x, widgets['sfmlMakeObject'].size.y)
+        sfmlMakeObject = widgets['sfmlMakeObject']
+        render = sf.RenderTexture(sfmlMakeObject.size.x, sfmlMakeObject.size.y)
         render.clear(sf.Color(0, 0, 0, 0))
         title = widgets['widgetsProperties']['nameEntered'].get_text()
         typeName = widgets['widgetsProperties']['typeComboBox'].get_active_text()
@@ -175,22 +176,21 @@ class ObjectManager(Gtk.Box):
         tileID = list()
         fileName = list()
 
-        for i in range(widgets['sfmlMakeObject'].numberCase.x):
+        for i in range(sfmlMakeObject.numberCase.x):
             tileID.append(list())
             fileName.append(list())
-            for j in range(widgets['sfmlMakeObject'].numberCase.y):
-                if widgets['sfmlMakeObject'].listTile[i][j]:
-                    render.draw(widgets['sfmlMakeObject'].listTile[i][j].sprite)
-                    tileID[-1].append(widgets['sfmlMakeObject'].listTile[i][j].tileID)
-                    fileName[-1].append(widgets['sfmlMakeObject'].listTile[i][j].fileName)
+            for j in range(sfmlMakeObject.numberCase.y):
+                if sfmlMakeObject.listTile[i][j]:
+                    render.draw(sfmlMakeObject.listTile[i][j].sprite)
+                    tileID[-1].append(sfmlMakeObject.listTile[i][j].tileID)
+                    fileName[-1].append(sfmlMakeObject.listTile[i][j].fileName)
                 else:
                     tileID[-1].append(-1)
                     fileName[-1].append(-1)
 
         render.display()
-
-        self.addObjectFromTexture(render.texture, widgets['sfmlMakeObject'].tileSize, \
-                widgets['sfmlMakeObject'].numberCase, tileID, fileName, title, typeName)
+        self.addObjectFromTexture(render.texture, sfmlMakeObject.tileSize, \
+                sfmlMakeObject.numberCase, tileID, fileName, title, typeName)
         widgets['windowMakeObject'].destroy()
         widgets['widgetsProperties']['window'].destroy()
 
@@ -292,7 +292,7 @@ class ObjectManager(Gtk.Box):
                 fileIDListElement = [columnTileValues['fileID']]
                 fileIDListElement = list(csv.reader(fileIDListElement))
 
-                tileIDList.append(tileIDListElement[0])
+                tileIDList.append([int(x) for x in tileIDListElement[0]])
                 fileNameList.append([tileBox.getFileName(int(x)) for x in fileIDListElement[0]])
 
                 y=0
@@ -316,11 +316,22 @@ class ObjectManager(Gtk.Box):
         i=0
         for obj in self.objectDict.values():
             if objectID == self.getObjectID(obj.nameObject):
-                return {'from':'ObjectManager', 'numberCase':obj.numberCase,\
-                        'name':obj.nameObject, 'numColumn':self.numColumn, 'style':'Object',\
-                        'objectTexture':ObjectManager.objectTexture[obj.nameObject]}
+                dndDatas = {'from':'ObjectManager', 'numberCase':obj.numberCase,\
+                            'name':obj.nameObject, 'numColumn':self.numColumn, 'style':'Object',\
+                            'objectTexture':ObjectManager.objectTexture[obj.nameObject],\
+                            "objectID":objectID}
+
+                return dndDatas
 
         return None
+
+    def clearAll(self):
+        objectTexture = OrderedDict()
+        self.objectDict = OrderedDict()
+        self.expanderDict = OrderedDict()
+
+        for child in self.expanderBox:
+            self.expanderBox.remove(child)
 
 class ObjectTileIcon(GdkPixbuf.Pixbuf):
     def new(image, name, numberCase):
