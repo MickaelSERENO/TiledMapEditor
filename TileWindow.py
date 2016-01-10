@@ -49,7 +49,7 @@ class TileWindow(Gtk.Window):
 
         self.panedSFML_toolPaned = Gtk.Paned()
         self.panedSFML_toolPaned.add1(self.sfmlTilePaned)
-        self.panedSFML_toolPaned.pack2(self.toolPaned, True, True)
+        self.panedSFML_toolPaned.pack2(self.toolPaned, False, True)
         self.panedSFML_toolPaned.connect('notify::position', self.handleToolPanedMoving)
         self.panedSFML_toolPaned.set_property('position-set', True)
         self.panedSFML_toolPaned.set_position(600)
@@ -220,10 +220,10 @@ class TileWindow(Gtk.Window):
             windowValuesElement[item[0]]=item[1]
 
         tileSizeSplit = windowValuesElement['tileSize'].split('x')
-        windowValuesElement['tileSize'] = sf.Vector2(int(tileSizeSplit[0]), int(tileSizeSplit[1]))
+        windowValuesElement['tileSize'] = sf.Vector2(float(tileSizeSplit[0]), float(tileSizeSplit[1]))
 
         numberCasesSplit = windowValuesElement['numberCases'].split('x')
-        windowValuesElement['numberCases'] = sf.Vector2(int(numberCasesSplit[0]), int(numberCasesSplit[1]))
+        windowValuesElement['numberCases'] = sf.Vector2(float(numberCasesSplit[0]), float(numberCasesSplit[1]))
         self.buildSFMLArea(windowValuesElement['numberCases'], windowValuesElement['tileSize'])
 
         self.set_title(windowValuesElement['title'])
