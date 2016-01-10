@@ -164,7 +164,7 @@ class TraceManager(Gtk.Box):
                         tileSubElem.set('position', str(tile.position.x)+'x'+str(tile.position.y))
                     else:
                         tileSubElem = ET.SubElement(dynamicTraceElem, "StaticTile")
-                        tileSubElem.set('fileName', str(tileBox.getFileID(tile.fileName, 'static')))
+                        tileSubElem.set('fileID', str(tileBox.getFileID(tile.fileName, 'static')))
                         tileSubElem.set('tileID', str(tile.tileID))
                         tileSubElem.set('position', str(tile.position.x)+'x'+str(tile.position.y))
 
@@ -217,5 +217,40 @@ class TraceManager(Gtk.Box):
                     y=y+1
                 x=x+1
 
-        for dynamicTrace in dynamicTraceList:
-            pass
+        for dynamicTraceElem in dynamicTraceList:
+            traceValues = dict()
+            for items in dynamicTraceElem.items():
+                traceValues[items[0]] = items[1]
+
+            self.addDynamicTrace(traceValues['name'])
+            dynamicTrace = globalVar.sfmlArea.listTrace[-1]
+
+            for dynamicTileElem in dynamicTraceElem.findall('DynamicTile'):
+                dynamicValue = dict()
+                for items in dynamicTileElem.items():
+                    dynamicValue[items[0]] = items[1]
+
+                origin   = dynamicValue['origin'].split('x')
+                origin   = sf.Vector2(float(origin[0]), float(origin[1]))
+                position = dynamicValue['position'].split('x')
+                position = sf.Vector2(float(position[0]), float(position[1]))
+
+                dndDatas = tileBox.getDndDatas(int(dynamicValue['tileID']), int(dynamicValue['fileID']))
+                dynamicTraceWidgets = {"origin" : origin, "position" : position,\
+                        "timeEntry" : int(float(dynamicValue['animTime']))}
+                TileBox.dndDatas = dndDatas
+
+                dynamicTrace.addDynamicTile(dynamicTraceWidgets)
+
+            for staticTileElem in dynamicTraceElem.findall('StaticTile'):
+                staticValues = dict()
+                for items in staticTileElem.items():
+                    staticValues[items[0]] = items[1]
+
+                dndDatas = tileBox.getDndDatas(int(staticValues['tileID']), int(staticValues['fileID']))
+                TileBox.dndDatas = dndDatas
+
+                position = staticValues['position'].split('x')
+                position = sf.Vector2(float(position[0]), float(position[1]))
+
+                dynamicTrace.addStaticTile(position.x, position.y)

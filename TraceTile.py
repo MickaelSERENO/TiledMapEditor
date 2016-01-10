@@ -390,14 +390,11 @@ class DynamicTrace(Trace):
         globalVar.sfmlArea.updateMiniMap()
 
     def confirmDynamicTile(self, button, widgets):
-        dndDatas = TileBox.dndDatas
         origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
-        self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
-                widgets['timeEntry'].get_value(), origin, widgets['position'],\
-                dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\
-                dndDatas['animName']))
+        widgets['timeEntry'] = widgets['timeEntry'].get_value()
+        widgets['origin'] = origin
 
-        globalVar.sfmlArea.updateMiniMap()
+        self.addDynamicTile(widgets)
         if 'window' in widgets:
             widgets['window'].destroy()
 
@@ -405,6 +402,16 @@ class DynamicTrace(Trace):
         for tile in self.listDynamicTile:
             if isMouseInRect(coord, tile.rect):
                 return tile
+
+    def addDynamicTile(self, widgets):
+        dndDatas = TileBox.dndDatas
+        self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
+                widgets['timeEntry'], widgets['origin'], widgets['position'],\
+                dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\
+                dndDatas['animName']))
+
+        globalVar.sfmlArea.updateMiniMap()
+
 
 class Tile:
     def __init__(self, tileID, position, subRect, texture, fileName, madeByObject=False, \
@@ -492,4 +499,4 @@ class MakedObjectTile():
     def setPosition(self, position):
         self.sprite.position = position
 
-    rect = property(lambda self : self.sprite.global_bounds)
+    Rect = property(lambda self : self.sprite.global_bounds)
