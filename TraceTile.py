@@ -148,10 +148,6 @@ class StaticTrace(Trace):
                                         eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
                                         objIndice = sf.Vector2(int((eventCoord.x-self.shift.x)/self.tileSize.x), int((eventCoord.y-self.shift.y)/self.tileSize.y))
                                         tileID = globalVar.tileWindow.objectManager.objectDict[obj.name].tileID
-                                        print(tileID)
-                                        print(objIndice)
-                                        print(indice)
-                                        print(objIndice-indice)
                                         if tileID[objIndice.x-indice.x][objIndice.y-indice.y] == -1:
                                             continue
 
@@ -176,17 +172,26 @@ class StaticTrace(Trace):
                 self.leftMousePress = False
                 if self.tileMoving:
                     coord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
-                    indice = sf.Vector2(min(\
-                            int(max((self.tileMoving.position.x, self.shift.x)) / self.tileSize.x),\
-                            len(self.listStaticTile)-1),\
-                            \
-                            min(int(max((self.tileMoving.position.y), self.shift.y) / self.tileSize.y), \
-                            len(self.listStaticTile[0])-1))
 
+                    indice = None
                     if type(self.tileMoving) is StaticTile:
+                        indice = sf.Vector2(min(\
+                                int(max((coord.x, self.shift.x)) / self.tileSize.x),\
+                                len(self.listStaticTile)-1),\
+                                \
+                                min(int(max((coord.y), self.shift.y) / self.tileSize.y), \
+                                len(self.listStaticTile[0])-1))
+
                         self.deleteObjectInListForStatic(indice)
 
                     elif type(self.tileMoving) is ObjectTile:
+                        indice = sf.Vector2(min(\
+                                int(max((self.tileMoving.position.x, self.shift.x)) / self.tileSize.x),\
+                                len(self.listStaticTile)-1),\
+                                \
+                                min(int(max((self.tileMoving.position.y), self.shift.y) / self.tileSize.y), \
+                                len(self.listStaticTile[0])-1))
+
                         self.deleteObjectInListForObject(indice, self.tileMoving.name)
                         tileID = globalVar.tileWindow.objectManager.objectDict[self.tileMoving.name].tileID
                         for x in range(int(self.tileMoving.numberCase.x)):
@@ -291,22 +296,23 @@ class DynamicTrace(Trace):
                 tile.update()
 
         if self.tileMoving:
-            self.tileMoving.update
-
+            self.tileMoving.update()
 
     def updateEventTile(self, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
+                eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
                 for tile in self.listDynamicTile[::-1]:
-                    if isMouseInRect(sf.Vector2(event.x, event.y),\
+                    if isMouseInRect(sf.Vector2(eventCoord.x, eventCoord.y),\
                             tile.rect):
                         self.tileMoving = tile
-                        self.posMoving = sf.Vector2(event.x, event.y) - tile.position
+                        self.posMoving = sf.Vector2(eventCoord.x, eventCoord.y) - tile.position
                         break
 
         if event.type == Gdk.EventType.BUTTON_RELEASE:
             if self.tileMoving:
-                self.tileMoving.position = sf.Vector2(event.x, event.y) - self.posMoving
+                eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
+                self.tileMoving.position = sf.Vector2(eventCoord.x, eventCoord.y) - self.posMoving
                 globalVar.sfmlArea.updateMiniMap()
  
         Trace.updateEventTile(self, event)
