@@ -235,7 +235,7 @@ class TraceManager(Gtk.Box):
                 position = dynamicValue['position'].split('x')
                 position = sf.Vector2(float(position[0]), float(position[1]))
 
-                dndDatas = tileBox.getDndDatas(int(dynamicValue['tileID']), int(dynamicValue['fileID']))
+                dndDatas = tileBox.getDndDatas(int(dynamicValue['tileID']), int(dynamicValue['fileID']), dynamicValue['animName'])
                 dynamicTraceWidgets = {"origin" : origin, "position" : position,\
                         "timeEntry" : int(float(dynamicValue['animTime']))}
                 TileBox.dndDatas = dndDatas
