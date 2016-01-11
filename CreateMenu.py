@@ -462,16 +462,18 @@ class CreateMenu:
         if not parent:
             parent = widgets['treeStore'].get_iter(len(widgets['treeStore']) - 1)
 
+        name=0
+
         while widgets['treeStore'].iter_parent(parent):
+            name += widgets['treeStore'].iter_n_children(parent)
             parent = widgets['treeStore'].iter_parent(parent)
 
         widgets['treeStore'].insert_with_values(parent, -1, range(5), \
-                [widgets['treeStore'].iter_n_children(parent)+1,\
+                [name + widgets['treeStore'].iter_n_children(parent),\
                 str(int(widgets['positionX'].get_value())),\
                 str(int(widgets['positionY'].get_value())),\
                 str(int(widgets['sizeX'].get_value())),\
                 str(int(widgets['sizeY'].get_value()))])
-        
 
     def resetEntity(self, button, widgets):
         widgets['positionX'].set_value(widgets['positionX'].get_lower())
@@ -482,10 +484,7 @@ class CreateMenu:
     def cutAnimation(self, button, widgets):
         if not 'table' in widgets:
             return
-        for i in range(len(widgets['treeStore'])):
-            self.parent.tileBox.cutTileAnimation(widgets['treeStore'],\
-                    widgets['treeStore'].get_iter(i),\
-                    widgets['imageEntered'].get_text())
+        self.parent.tileBox.cutTileAnimationTreeStore(widgets['treeStore'], widgets['imageEntered'].get_text())
 
         self.quitWindow(button, widgets['imageWindow'])
 
