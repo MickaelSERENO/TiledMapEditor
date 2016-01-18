@@ -238,6 +238,7 @@ class TileBox(Gtk.ScrolledWindow):
             dragIconSubElem.set('tileSize', str(view.size.x)+'x'+str(view.size.y))
             dragIconSubElem.set('spacing', str(view.spacing.x)+'x'+str(view.spacing.y))
             tileIter = view.get_model().get_iter_first()
+            test = False
             while tileIter:
                 tile = view.get_model().get_value(tileIter, 0)
                 tileSubElem = ET.SubElement(dragIconSubElem, 'staticTile')
@@ -304,15 +305,14 @@ class TileBox(Gtk.ScrolledWindow):
             self.cutTileSet(path+'/'+elemValues['file'], elemValues['tileSize'], elemValues['spacing'])
 
             iterStaticPass = False
-            for treeModelRow, staticTileElement in zip(self.staticList[-1].get_model(),\
-                    staticElement.iter()):
+            tileIter = self.staticList[-1].get_model().get_iter_first()
+            for staticTileElement in staticElement.iter():
                 #The first staticTileElement iter is a Static Element and not a staticTile Element
                 if iterStaticPass==False:
                     iterStaticPass = True
                     continue
 
-                tile = self.staticList[-1].get_model().get_value(\
-                        self.staticList[-1].get_model().get_iter(treeModelRow.path), 0)
+                tile = self.staticList[-1].get_model().get_value(tileIter, 0)
 
                 tileValues = OrderedDict()
                 for tileItems in staticTileElement.items(): 
@@ -320,6 +320,7 @@ class TileBox(Gtk.ScrolledWindow):
 
                 tile.name = tileValues['name']
                 tile.type = tileValues['type']
+                tileIter = self.staticList[-1].get_model().iter_next(tileIter)
 
         for dynamicElement in listDynamicElement:
             dynamicValuesElement = OrderedDict()
@@ -376,13 +377,13 @@ class TileBox(Gtk.ScrolledWindow):
 
             currentDynamicList = self.dynamicDict[dynamicValuesElement['file']]
             for iconView in currentDynamicList:
-                for treeModelRow, tileDict in zip(iconView.get_model(), \
-                        tileValueDict[iconView.get_name()]):
-                    tile = iconView.get_model().get_value(\
-                            iconView.get_model().get_iter(treeModelRow.path), 0)
+                tileIter = iconView.get_model().get_iter_first()
+                for tileDict in tileValueDict[iconView.get_name()]:
+                    tile = iconView.get_model().get_value(tileIter, 0)
 
                     tile.name = tileDict['name']
                     tile.type = tileDict['type']
+                    tileIter = view.get_model().iter_next(tileIter)
 
     def getDndDatas(self, tileID, fileID, animName=""):
         if fileID < len(self.staticList):

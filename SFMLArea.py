@@ -243,7 +243,7 @@ class SFMLArea(Gtk.DrawingArea):
 
     def windowSetTileProperties(self, widget):
         window = Gtk.Window(title="Set tile properties")
-        window.set_property("modale", True)
+        window.set_property("modal", True)
         accelGroup = Gtk.AccelGroup()
         window.add_accel_group(accelGroup)
 
