@@ -11,6 +11,7 @@ class Trace:
         self.tileMoving = None
         self.posMoving = sf.Vector2(0, 0)
         self.name = name
+        self.leftMousePress = False
 
     def update(self):
         if not self.show:
@@ -18,13 +19,17 @@ class Trace:
         return True
 
     def updateEventTile(self, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:
+                self.leftMousePress = True
+
         if event.type == Gdk.EventType.MOTION_NOTIFY:
             if self.tileMoving:
                 self.tileMoving.position = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y)) - self.posMoving
 
         if event.type == Gdk.EventType.BUTTON_RELEASE:
-            if self.tileMoving:
-                self.tileMoving = None
+            if event.button == 1:
+                self.leftMousePress = False
 
     def addTile(self, x, y):
         return
@@ -45,7 +50,6 @@ class StaticTrace(Trace):
         self.indiceTile = None
         self.posMoving = sf.Vector2(0, 0)
         self.style="Static"
-        self.leftMousePress = False
         self.controlKey = False
         self.shift = shift
 
@@ -132,6 +136,7 @@ class StaticTrace(Trace):
         globalVar.sfmlArea.updateMiniMap()
 
     def updateEventTile(self, event):
+        Trace.updateEventTile(self, event)
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
                 self.leftMousePress = True
@@ -205,6 +210,7 @@ class StaticTrace(Trace):
 
                     self.tileMoving.position = self.tileSize * indice + self.shift
                     globalVar.sfmlArea.updateMiniMap()
+                    self.tileMoving = None
 
 
         if event.type == Gdk.EventType.KEY_PRESS:
@@ -222,8 +228,6 @@ class StaticTrace(Trace):
             elif self.controlKey and self.leftMousePress:
                 coord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
                 self.addTile(coord.x, coord.y)
-
-        Trace.updateEventTile(self, event)
 
     def deleteObjectInListForStatic(self, indice):
         for i in range(len(self.listStaticTile)):
@@ -299,6 +303,7 @@ class DynamicTrace(Trace):
             self.tileMoving.update()
 
     def updateEventTile(self, event):
+        Trace.updateEventTile(self, event)
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:
                 eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
@@ -314,11 +319,21 @@ class DynamicTrace(Trace):
                 eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
                 self.tileMoving.position = sf.Vector2(eventCoord.x, eventCoord.y) - self.posMoving
                 globalVar.sfmlArea.updateMiniMap()
- 
-        Trace.updateEventTile(self, event)
+                self.tileMoving = False
+
+        if event.type == Gdk.EventType.MOTION_NOTIFY:
+            if self.leftMousePress and globalVar.sfmlArea.mode == "Eraser":
+                eventCoord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
+                self.removeTile(eventCoord)
 
     def addTile(self, x, y):
         self.makeAddTileWindowPrompt(x, y)
+
+    def removeTile(self, coord):
+        for i, tile in enumerate(self.listDynamicTile):
+            if isMouseInRect(coord, tile.rect):
+                del self.listDynamicTile[i]
+                break
 
     def makeAddTileWindowPrompt(self, x, y):
         dndDatas = TileBox.dndDatas

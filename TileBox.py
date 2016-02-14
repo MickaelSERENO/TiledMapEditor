@@ -92,7 +92,7 @@ class TileBox(Gtk.ScrolledWindow):
                     posY += size.y + spacing.y
                 treeStore.append(None, listPixbuf)
                 tileID = tileID + 1
-            viewIcon = StaticDragIconView(treeStore, size, spacing, self.numColumn, fileName.split('/')[1])
+            viewIcon = StaticDragIconView(treeStore, size, spacing, self.numColumn, fileName)
             viewIcon.set_columns(self.numColumn)
             viewIcon.set_pixbuf_column(0)
             viewIcon.set_name(fileName)
@@ -383,7 +383,7 @@ class TileBox(Gtk.ScrolledWindow):
 
                     tile.name = tileDict['name']
                     tile.type = tileDict['type']
-                    tileIter = view.get_model().iter_next(tileIter)
+                    tileIter = iconView.get_model().iter_next(tileIter)
 
     def getDndDatas(self, tileID, fileID, animName=""):
         if fileID < len(self.staticList):
