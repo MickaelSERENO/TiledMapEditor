@@ -520,15 +520,13 @@ class CreateMenu:
         sizeXSpin = Gtk.SpinButton(adjustment=sizeXAdjustment)
         sizeYSpin = Gtk.SpinButton(adjustment=sizeYAdjustment)
 
-        addAnnim = Gtk.Button(label="Add")
         addEntity = Gtk.Button(label="Add")
         resetEntity = Gtk.Button(label="Reset")
 
         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
 
         grid.attach(nameLabel, 0,0,1,1)
-        grid.attach_next_to(nameEntry, nameLabel, Gtk.PositionType.RIGHT, 1, 1)
-        grid.attach_next_to(addAnnim, nameEntry, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(nameEntry, nameLabel, Gtk.PositionType.RIGHT, 1, 2)
         grid.attach_next_to(separator, nameLabel, Gtk.PositionType.BOTTOM, 3, 1)
         grid.attach_next_to(titleLabel, separator, Gtk.PositionType.BOTTOM, 4, 1)
 
@@ -566,7 +564,6 @@ class CreateMenu:
         widgets['sizeX'] = sizeXSpin
         widgets['sizeY'] = sizeYSpin
 
-        addAnnim.connect('clicked', self.addAnniInTree, widgets)
         addEntity.connect('clicked', self.addStaticEntityInTree, widgets)
         resetEntity.connect('clicked', self.resetEntity, widgets)
 
@@ -647,22 +644,11 @@ class CreateMenu:
         widgets['treeStore'].set_value(parent, 0, widgets['nameAnnimEntered'].get_text())
 
     def addStaticEntityInTree(self, button, widgets):
-        if len(widgets['treeStore']) == 0:
+        name = widgets['nameAnnimEntered'].get_text()
+        if name == "":
             return
 
-        parent = widgets['table'].get_selection().get_selected()[1]
-        if not parent:
-            parent = widgets['treeStore'].get_iter(len(widgets['treeStore']) - 1)
-
-        name=0
-        while widgets['treeStore'].iter_parent(parent):
-            name += widgets['treeStore'].iter_n_children(parent)
-            parent = widgets['treeStore'].iter_parent(parent)
-
-        print("ok")
-
-        widgets['treeStore'].insert_with_values(parent, -1, range(8), \
-                [name + widgets['treeStore'].iter_n_children(parent),\
+        parent = widgets['treeStore'].append(None, row = [name,\
                 str(int(widgets['nX'].get_value())),\
                 str(int(widgets['positionX'].get_value())),\
                 str(int(widgets['positionY'].get_value())),\
@@ -670,7 +656,6 @@ class CreateMenu:
                 str(int(widgets['spacY'].get_value())),\
                 str(int(widgets['sizeX'].get_value())),\
                 str(int(widgets['sizeY'].get_value()))])
-
 
     def addDynamicEntityInTree(self, button, widgets):
         if len(widgets['treeStore']) == 0:
@@ -699,13 +684,21 @@ class CreateMenu:
         widgets['sizeY'].set_value(widgets['sizeY'].get_lower())
 
     def cutAnimation(self, button, widgets):
+        dynamicTable = None
+        staticTable = None
+        imageEntered = widgets['imageEntered'].get_text()
+
         if 'dynamic' in widgets:
             dynamicWidgets = widgets['dynamic']
             if 'table' in dynamicWidgets:
-                self.parent.tileBox.cutTileAnimationTreeStore(dynamicWidgets['treeStore'], dynamicWidgets['imageEntered'].get_text())
+                dynamicTable = dynamicWidgets['treeStore']
 
-        elif 'static' in widgets:
+        if 'static' in widgets:
             staticWidgets = widgets['static']
+            if 'table' in staticWidgets:
+                staticTable = staticWidgets['treeStore']
+
+            self.parent.tileBox.cutAnimationTreeStore(dynamicTable, staticTable, imageEntered)
 
         self.quitWindow(button, widgets['imageWindow'])
 

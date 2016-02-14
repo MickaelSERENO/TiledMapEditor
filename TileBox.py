@@ -119,9 +119,9 @@ class TileBox(Gtk.ScrolledWindow):
             self.staticList.append(viewIcon)
             self.show_all()
 
-    def cutTileAnimationTreeStore(self, treeStoreAnnim, fileName):
+    def cutAnimationTreeStore(self, dynamicTreeStore, staticTreeStore, fileName):
         fileName = "Files/"+path.basename(fileName)
-        if fileName in TileBox.textureList:
+        if fileName in Texture.textureList:
             return
 
         fileName = path.relpath(path.abspath(fileName), path.abspath(path.dirname(__file__)))
@@ -131,15 +131,23 @@ class TileBox(Gtk.ScrolledWindow):
 
         TileBox.textureList[fileName] = sf.Texture.from_file(fileName)
 
-        for i in range(len(treeStoreAnnim)):
-            if treeStoreAnnim.iter_n_children(treeStoreAnnim.get_iter(i)) > 0:
-                self.cutTileAnimation(treeStoreAnnim,\
-                        treeStoreAnnim.get_iter(i),\
-                        fileName)
+        if dynamicTreeStore:
+            for i in range(len(dynamicTreeStore)):
+                if dynamicTreeStore.iter_n_children(dynamicTreeStore.get_iter(i)) > 0:
+                    self.cutDynamicAnimation(dynamicTreeStore,\
+                            dynamicTreeStore.get_iter(i),\
+                            fileName)
 
+        if staticTreeStore:
+            for i in range(len(dynamicTreeStore)):
+                self.cutStaticAnimation(staticTreeStore.get_iter(i), fileName)
+
+    #An animation has the following attributes : name, nX, posX, posY, spacX, spacY, sizeX, sizeY
+    def cutStaticAnimation(self, animation, fileName):
+        pass
 
     #An animation have many entity with 4 attributes : position in x and y and size in x and y
-    def cutTileAnimation(self, treeStoreAnnim, animation, fileName):
+    def cutDynamicAnimation(self, treeStoreAnnim, animation, fileName):
         if fileName and path.isfile(fileName):
             if not fileName in self.dynamicAnimationDict:
                 self.dynamicAnimationDict[fileName] = []
@@ -390,7 +398,7 @@ class TileBox(Gtk.ScrolledWindow):
                     tileValueDict[animationValuesEntity['name']].append(tileValuesEntity)
                     posTileEntity+=1
 
-            self.cutTileAnimationTreeStore(treeStoreAnnim, dynamicValuesElement['file'])
+            self.cutAnimationTreeStore(treeStoreAnnim, None, dynamicValuesElement['file'])
 
             currentDynamicList = self.dynamicAnimationDict[dynamicValuesElement['file']]
             for iconView in currentDynamicList:
