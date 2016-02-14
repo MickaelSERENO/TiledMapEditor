@@ -23,10 +23,26 @@ class TileBox(Gtk.ScrolledWindow):
 
         animationExpander = Gtk.Expander()
         animationExpander.set_label("Animation")
-        self.animationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        animationExpander.add(self.animationBox)
+        animationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        animationExpander.add(animationBox)
 
-        self.dynamicDict = OrderedDict()
+        staticAnimationExpander = Gtk.Expander()
+        staticAnimationExpander.set_label("Static Animation")
+
+        dynamicAnimationExpander = Gtk.Expander()
+        dynamicAnimationExpander.set_label("Dynamic Animation")
+
+        self.staticAnimationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.dynamicAnimationBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+
+        staticAnimationExpander.add(self.staticAnimationBox)
+        dynamicAnimationExpander.add(self.dynamicAnimationBox)
+
+        animationBox.pack_start(staticAnimationExpander, True, True, 0)
+        animationBox.pack_start(dynamicAnimationExpander, True, True, 0)
+
+        self.dynamicAnimationDict = OrderedDict()
+        self.staticAnimation = OrderedDict()
         self.staticList = []
 
         self.box.pack_start(animationExpander, True, True, 0)
@@ -43,10 +59,10 @@ class TileBox(Gtk.ScrolledWindow):
     def clearAll(self):
         for child in self.staticBox.get_children():
             self.staticBox.remove(child)
-        for child in self.animationBox.get_children():
-            self.animationBox.remove(child)
+        for child in self.dynamicAnimationBox.get_children():
+            self.dynamicAnimationBox.remove(child)
         self.staticList = []
-        self.dynamicDict = OrderedDict()
+        self.dynamicAnimationDict = OrderedDict()
         TileBox.textureList = OrderedDict()
 
     def makeActionMenu(self, actionGroup):
@@ -125,8 +141,8 @@ class TileBox(Gtk.ScrolledWindow):
     #An animation have many entity with 4 attributes : position in x and y and size in x and y
     def cutTileAnimation(self, treeStoreAnnim, animation, fileName):
         if fileName and path.isfile(fileName):
-            if not fileName in self.dynamicDict:
-                self.dynamicDict[fileName] = []
+            if not fileName in self.dynamicAnimationDict:
+                self.dynamicAnimationDict[fileName] = []
 
             expander = Gtk.Expander()
             expander.set_label(treeStoreAnnim.get_value(animation, 0))
@@ -160,8 +176,9 @@ class TileBox(Gtk.ScrolledWindow):
             viewIcon.connect("button_press_event", self.pressButtonEvent)
 
             expander.add(viewIcon)
-            self.dynamicDict[fileName].append(viewIcon)
-            self.animationBox.pack_start(expander, True, True, 0)
+            self.dynamicAnimationDict[fileName].append(viewIcon)
+            self.dynamicAnimationBox.pack_start(expander, True, True, 0)
+            print("ok")
             self.show_all()
 
     def disconnectAll(self):
@@ -246,7 +263,7 @@ class TileBox(Gtk.ScrolledWindow):
                 tileSubElem.set('type', tile.type)
                 tileIter = view.get_model().iter_next(tileIter)
 
-        for viewList in self.dynamicDict.values():
+        for viewList in self.dynamicAnimationDict.values():
             dragIconSubElem = ET.SubElement(fileElem, 'Dynamic')
             for view in viewList:
                 dragIconSubElem.set('file', view.fileName)
@@ -272,7 +289,7 @@ class TileBox(Gtk.ScrolledWindow):
                 if self.staticList[i].fileName == fileName:
                     return i
         else:
-            l = list(self.dynamicDict.keys())
+            l = list(self.dynamicAnimationDict.keys())
             if l.count(fileName):
                 return len(self.staticList)+l.index(fileName)
         return -1
@@ -281,7 +298,7 @@ class TileBox(Gtk.ScrolledWindow):
         if fileID < len(self.staticList):
             return self.staticList[fileID].fileName
         
-        l=list(self.dynamicDict.keys())
+        l=list(self.dynamicAnimationDict.keys())
         i = 0
         for fileName in l:
             if i == fileID - len(self.staticList):
@@ -375,7 +392,7 @@ class TileBox(Gtk.ScrolledWindow):
 
             self.cutTileAnimationTreeStore(treeStoreAnnim, dynamicValuesElement['file'])
 
-            currentDynamicList = self.dynamicDict[dynamicValuesElement['file']]
+            currentDynamicList = self.dynamicAnimationDict[dynamicValuesElement['file']]
             for iconView in currentDynamicList:
                 tileIter = iconView.get_model().get_iter_first()
                 for tileDict in tileValueDict[iconView.get_name()]:
@@ -390,7 +407,7 @@ class TileBox(Gtk.ScrolledWindow):
             return self.staticList[fileID].getDndDatasFromPath(tileID)
         else:
             i=0
-            for dynamicIconView in self.dynamicDict.values():
+            for dynamicIconView in self.dynamicAnimationDict.values():
                 if i == fileID-len(self.staticList):
                     for entityID in range(len(dynamicIconView)):
                         if dynamicIconView[entityID].getAnimName() == animName:
