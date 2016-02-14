@@ -27,19 +27,21 @@ class CreateMenu:
         nameEntered = Gtk.Entry()
         nameEntered.set_text("Tile")
 
+        #Tile Format widgets
         xLabel = Gtk.Label("x")
         spinTileLeft = Gtk.SpinButton()
-        adjustment1 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
+        adjustment1 = Gtk.Adjustment(32, 1, 1000, 1, 10, 0)
         spinTileLeft.set_adjustment(adjustment1)
-        adjustment2 = Gtk.Adjustment(32, 0, 1000, 1, 10, 0)
+        adjustment2 = Gtk.Adjustment(32, 1, 1000, 1, 10, 0)
         spinTileRight = Gtk.SpinButton()
         spinTileRight.set_adjustment(adjustment2)
 
+        #Number cases widgets
         xBisLabel = Gtk.Label("x")
         spinCasesLeft = Gtk.SpinButton()
-        adjustment3 = Gtk.Adjustment(32, 0, 100000, 1, 10, 0)
+        adjustment3 = Gtk.Adjustment(32, 1, 100000, 1, 10, 0)
         spinCasesLeft.set_adjustment(adjustment3)
-        adjustment4 = Gtk.Adjustment(32, 0, 100000, 1, 10, 0)
+        adjustment4 = Gtk.Adjustment(32, 1, 100000, 1, 10, 0)
         spinCasesRight = Gtk.SpinButton()
         spinCasesRight.set_adjustment(adjustment4)
 
@@ -306,9 +308,14 @@ class CreateMenu:
         widgets['imageEntered'] = imageEntered
 
         hbox = Gtk.Box()
-        setTableSize = Gtk.Button(label="Set Table")
-        setTableSize.connect("clicked", self.setTable, widgets)
-        hbox.pack_start(setTableSize, False, False, 0)
+
+        setDynamicTableSize = Gtk.Button(label="Set Dynamic Table")
+        setDynamicTableSize.connect("clicked", self.setDynamicTable, widgets)
+        hbox.pack_start(setDynamicTableSize, False, False, 0)
+
+        setStaticTableSize = Gtk.Button(label="Set Static Table")
+        setStaticTableSize.connect("clicked", self.setStaticTable, widgets)
+        hbox.pack_start(setStaticTableSize, False, False, 0)
 
         box = Gtk.Box()
         okButton = Gtk.Button(label="OK")
@@ -330,7 +337,7 @@ class CreateMenu:
         vgrid.add(hbox)
         return vgrid
 
-    def newTable(self):
+    def newDynamicTable(self):
         treeScore = Gtk.TreeStore(str, str, str, str, str)
         treeView = Gtk.TreeView(model=treeScore)
 
@@ -354,34 +361,218 @@ class CreateMenu:
 
         return treeView
 
-    def setTable(self, button, widgets):
+    def newStaticTable(self):
+        treeScore = Gtk.TreeStore(str, str, str, str, str, str, str, str)
+        treeView = Gtk.TreeView(model=treeScore)
+
+        titleRenderer = Gtk.CellRendererText()
+        nXRenderer    = Gtk.CellRendererText()
+        posXRenderer  = Gtk.CellRendererText()
+        posYRenderer  = Gtk.CellRendererText()
+        spacXRenderer = Gtk.CellRendererText()
+        spacYRenderer = Gtk.CellRendererText()
+        sizeXRenderer = Gtk.CellRendererText()
+        sizeYRenderer = Gtk.CellRendererText()
+
+        columnTitle   = Gtk.TreeViewColumn("Name", titleRenderer, text = 0)
+        columnNX      = Gtk.TreeViewColumn("Tile on X", nXRenderer, text = 1)
+        columnPosX    = Gtk.TreeViewColumn("Position x", posXRenderer, text = 2)
+        columnPosY    = Gtk.TreeViewColumn("Position y", posYRenderer, text = 3)
+        columnSpacX   = Gtk.TreeViewColumn("Spacing x", spacXRenderer, text = 4)
+        columnSpacY   = Gtk.TreeViewColumn("Spacing y", spacYRenderer, text = 5)
+        columnSizeX   = Gtk.TreeViewColumn("Tile size x", sizeXRenderer, text = 6)
+        columnSizeY   = Gtk.TreeViewColumn("Tile size y", sizeYRenderer, text = 7)
+
+        treeView.append_column(columnTitle)
+        treeView.append_column(columnNX)
+        treeView.append_column(columnPosX)
+        treeView.append_column(columnPosY)
+        treeView.append_column(columnSpacX)
+        treeView.append_column(columnSpacY)
+        treeView.append_column(columnSizeX)
+        treeView.append_column(columnSizeY)
+
+        return treeView
+
+    def setStaticTable(self, button, widgets):
         if not widgets['imageEntered'].get_text():
             return
-        window = Gtk.Window(title="New image")
-        widgets['table'] = self.newTable()
-        if not 'treeCopied' in widgets:
-            widgets['treeStore'] = widgets['table'].get_model()
+        if 'static' in widgets:
+            if widgets['static']['imageEntered'] is not widgets['imageEntered']:
+                widgetsDynamic = widgets['static']
+                for key in widgetsDynamic.keys():
+                    if key != "imageEntered":
+                        del widgetsDynamic[key]
+                del widgets['static']
 
-        widgets['table'].set_model(widgets['treeStore'])
-        treeCopy = functions.copyTreeStore(widgets['table'].get_model())
-        widgets['treeCopied'] = treeCopy
-        widgets['window'] = window
+        if not 'static' in widgets:
+            widgets['static'] = dict()
+
+        staticWidgets = widgets['static']
+        staticWidgets['imageEntered'] = widgets['imageEntered']
+
+        window = Gtk.Window(title="New image")
+        staticWidgets['table'] = self.newStaticTable()
+        if not 'treeCopied' in staticWidgets:
+            staticWidgets['treeStore'] = staticWidgets['table'].get_model()
+
+        staticWidgets['table'].set_model(staticWidgets['treeStore'])
+        treeCopy = functions.copyTreeStore(staticWidgets['table'].get_model())
+        staticWidgets['treeCopied'] = treeCopy
+        staticWidgets['window'] = window
 
         hBox = Gtk.Box(spacing=6,orientation=Gtk.Orientation.HORIZONTAL)
-        hBox.pack_start(widgets['table'], True, True, 0)
-        hBox.pack_start(self.insertNewAnimation(widgets), False, False, 0)
+        hBox.pack_start(staticWidgets['table'], True, True, 0)
+        hBox.pack_start(self.insertNewStaticAnimation(staticWidgets), False, False, 0)
 
         vBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         vBox.pack_start(hBox, True, True, 0)
         vBox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 0)
-        vBox.pack_start(self.actionAnimation(widgets), False, False, 0)
+        vBox.pack_start(self.actionAnimation(staticWidgets), False, False, 0)
 
         window.set_property("modal",True)
-        window.connect('delete-event', self.cancelAnimation, widgets)
+        window.connect('delete-event', self.cancelAnimation, staticWidgets)
         window.add(vBox)
         window.show_all()
 
-    def insertNewAnimation(self, widgets):
+    def setDynamicTable(self, button, widgets):
+        if not widgets['imageEntered'].get_text():
+            return
+
+        if 'dynamic' in widgets:
+            if widgets['dynamic']['imageEntered'] is not widgets['imageEntered']:
+                widgetsDynamic = widgets['dynamic']
+                for key in widgetsDynamic.keys():
+                    if key != "imageEntered":
+                        del widgetsDynamic[key]
+                del widgets['dynamic']
+
+        if not 'dynamic' in widgets:
+            widgets['dynamic'] = dict()
+
+        dynamicWidgets = widgets['dynamic']
+        dynamicWidgets['imageEntered'] = widgets['imageEntered']
+        dynamicWidgets['table'] = self.newDynamicTable()
+
+        window = Gtk.Window(title="New image")
+
+        if not 'treeCopied' in dynamicWidgets:
+            dynamicWidgets['treeStore'] = dynamicWidgets['table'].get_model()
+
+        dynamicWidgets['table'].set_model(dynamicWidgets['treeStore'])
+        treeCopy = functions.copyTreeStore(dynamicWidgets['table'].get_model())
+        dynamicWidgets['treeCopied'] = treeCopy
+        dynamicWidgets['window'] = window
+
+        hBox = Gtk.Box(spacing=6,orientation=Gtk.Orientation.HORIZONTAL)
+        hBox.pack_start(dynamicWidgets['table'], True, True, 0)
+        hBox.pack_start(self.insertNewDynamicAnimation(dynamicWidgets), False, False, 0)
+
+        vBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vBox.pack_start(hBox, True, True, 0)
+        vBox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 0)
+        vBox.pack_start(self.actionAnimation(dynamicWidgets), False, False, 0)
+
+        window.set_property("modal",True)
+        window.connect('delete-event', self.cancelAnimation, dynamicWidgets)
+        window.add(vBox)
+        window.show_all()
+
+    def insertNewStaticAnimation(self, widgets):
+        if not widgets['imageEntered'].get_text():
+            return
+        grid = Gtk.Grid()
+        vGrid = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
+
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+
+        vGrid.add(grid)
+        vGrid.add(hbox)
+
+        imagePixbuf = GdkPixbuf.Pixbuf.new_from_file(widgets['imageEntered'].get_text())
+        nameLabel = Gtk.Label("Name")
+        nXLabel = Gtk.Label("Tiles per rows")
+
+        titleLabel = Gtk.Label()
+        xLabel = Gtk.Label("Position X")
+        yLabel = Gtk.Label("Position Y")
+        spacXLabel = Gtk.Label("Spacing X")
+        spacYLabel = Gtk.Label("Spacing Y")
+        sizeXLabel = Gtk.Label("Tile Size X")
+        sizeYLabel = Gtk.Label("Tile Size Y")
+
+        nameEntry = Gtk.Entry()
+        nXAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0) 
+        positionXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0) 
+        positionYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
+
+        spacXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0) 
+        spacYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
+
+        sizeXAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0) 
+        sizeYAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_height(), 1, 10, 0) 
+
+        nXSpin = Gtk.SpinButton(adjustment=nXAdjustment)
+        xSpin = Gtk.SpinButton(adjustment=positionXAdjustment)
+        ySpin = Gtk.SpinButton(adjustment=positionYAdjustment)
+        spacXSpin = Gtk.SpinButton(adjustment=spacXAdjustment)
+        spacYSpin = Gtk.SpinButton(adjustment=spacYAdjustment)
+        sizeXSpin = Gtk.SpinButton(adjustment=sizeXAdjustment)
+        sizeYSpin = Gtk.SpinButton(adjustment=sizeYAdjustment)
+
+        addAnnim = Gtk.Button(label="Add")
+        addEntity = Gtk.Button(label="Add")
+        resetEntity = Gtk.Button(label="Reset")
+
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+
+        grid.attach(nameLabel, 0,0,1,1)
+        grid.attach_next_to(nameEntry, nameLabel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(addAnnim, nameEntry, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(separator, nameLabel, Gtk.PositionType.BOTTOM, 3, 1)
+        grid.attach_next_to(titleLabel, separator, Gtk.PositionType.BOTTOM, 4, 1)
+
+        grid.attach_next_to(nXLabel, titleLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(nXSpin, nXLabel, Gtk.PositionType.RIGHT, 2, 1)
+
+        grid.attach_next_to(xLabel, nXLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(xSpin, xLabel, Gtk.PositionType.RIGHT, 2, 1)
+        grid.attach_next_to(yLabel, xLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(ySpin, yLabel, Gtk.PositionType.RIGHT, 2, 1)
+
+        grid.attach_next_to(spacXLabel, yLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(spacXSpin, spacXLabel, Gtk.PositionType.RIGHT, 2, 1)
+        grid.attach_next_to(spacYLabel, spacXLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(spacYSpin, spacYLabel, Gtk.PositionType.RIGHT, 2, 1)
+
+        grid.attach_next_to(sizeXLabel, spacYLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(sizeXSpin, sizeXLabel, Gtk.PositionType.RIGHT, 2, 1)
+        grid.attach_next_to(sizeYLabel, sizeXLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(sizeYSpin, sizeYLabel, Gtk.PositionType.RIGHT, 2, 1)
+
+        hbox.pack_start(addEntity, False, False, 0)
+        hbox.pack_start(resetEntity, False, False, 0)
+        hbox.set_halign(Gtk.Align.END)
+        hbox.set_valign(Gtk.Align.END)
+
+
+        widgets['nameAnnimEntered'] = nameEntry
+
+        widgets['nX'] = nXSpin
+        widgets['positionX'] = xSpin
+        widgets['positionY'] = ySpin
+        widgets['spacX'] = spacXSpin
+        widgets['spacY'] = spacYSpin
+        widgets['sizeX'] = sizeXSpin
+        widgets['sizeY'] = sizeYSpin
+
+        addAnnim.connect('clicked', self.addAnniInTree, widgets)
+        addEntity.connect('clicked', self.addStaticEntityInTree, widgets)
+        resetEntity.connect('clicked', self.resetEntity, widgets)
+
+        return vGrid
+
+    def insertNewDynamicAnimation(self, widgets):
         if not widgets['imageEntered'].get_text():
             return
         grid = Gtk.Grid()
@@ -446,7 +637,7 @@ class CreateMenu:
         widgets['sizeY'] = sizeYSpin
 
         addAnnim.connect('clicked', self.addAnniInTree, widgets)
-        addEntity.connect('clicked', self.addEntityInTree, widgets)
+        addEntity.connect('clicked', self.addDynamicEntityInTree, widgets)
         resetEntity.connect('clicked', self.resetEntity, widgets)
 
         return vGrid
@@ -455,7 +646,33 @@ class CreateMenu:
         parent=widgets['treeStore'].append(None)
         widgets['treeStore'].set_value(parent, 0, widgets['nameAnnimEntered'].get_text())
 
-    def addEntityInTree(self, button, widgets):
+    def addStaticEntityInTree(self, button, widgets):
+        if len(widgets['treeStore']) == 0:
+            return
+
+        parent = widgets['table'].get_selection().get_selected()[1]
+        if not parent:
+            parent = widgets['treeStore'].get_iter(len(widgets['treeStore']) - 1)
+
+        name=0
+        while widgets['treeStore'].iter_parent(parent):
+            name += widgets['treeStore'].iter_n_children(parent)
+            parent = widgets['treeStore'].iter_parent(parent)
+
+        print("ok")
+
+        widgets['treeStore'].insert_with_values(parent, -1, range(8), \
+                [name + widgets['treeStore'].iter_n_children(parent),\
+                str(int(widgets['nX'].get_value())),\
+                str(int(widgets['positionX'].get_value())),\
+                str(int(widgets['positionY'].get_value())),\
+                str(int(widgets['spacX'].get_value())),\
+                str(int(widgets['spacY'].get_value())),\
+                str(int(widgets['sizeX'].get_value())),\
+                str(int(widgets['sizeY'].get_value()))])
+
+
+    def addDynamicEntityInTree(self, button, widgets):
         if len(widgets['treeStore']) == 0:
             return
         parent = widgets['table'].get_selection().get_selected()[1]
@@ -476,15 +693,19 @@ class CreateMenu:
                 str(int(widgets['sizeY'].get_value()))])
 
     def resetEntity(self, button, widgets):
-        widgets['positionX'].set_value(widgets['positionX'].get_lower())
-        widgets['positionY'].set_value(widgets['positionY'].get_lower())
+        widgets['positionX'].set_value(widgets['positionX'].get_adjustment().get_lower())
+        widgets['positionY'].set_value(widgets['positionY'].get_adjustment().get_lower())
         widgets['sizeX'].set_value(widgets['sizeX'].get_lower())
         widgets['sizeY'].set_value(widgets['sizeY'].get_lower())
 
     def cutAnimation(self, button, widgets):
-        if not 'table' in widgets:
-            return
-        self.parent.tileBox.cutTileAnimationTreeStore(widgets['treeStore'], widgets['imageEntered'].get_text())
+        if 'dynamic' in widgets:
+            dynamicWidgets = widgets['dynamic']
+            if 'table' in dynamicWidgets:
+                self.parent.tileBox.cutTileAnimationTreeStore(dynamicWidgets['treeStore'], dynamicWidgets['imageEntered'].get_text())
+
+        elif 'static' in widgets:
+            staticWidgets = widgets['static']
 
         self.quitWindow(button, widgets['imageWindow'])
 
@@ -530,12 +751,10 @@ class CreateMenu:
             return
         widgets['treeStore'].remove(parent)
 
-
     def copieTreeStore(self, button, widgets):
         widgets['treeCopied'] = functions.copyTreeStore(widgets['treeStore'])
 
     def cancelAnimation(self, button, event, widgets):
-        widgets['table'].unparent()
         widgets['treeStore'] = widgets['treeCopied']
         self.quitWindow(button, widgets['window'])
 
