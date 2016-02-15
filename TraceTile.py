@@ -426,6 +426,7 @@ class DynamicTrace(Trace):
 
     def addDynamicTile(self, widgets):
         dndDatas = TileBox.dndDatas
+        print(dndDatas)
         self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
                 widgets['timeEntry'], widgets['origin'], widgets['position'],\
                 dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\

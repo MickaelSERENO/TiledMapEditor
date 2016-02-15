@@ -362,10 +362,11 @@ class CreateMenu:
         return treeView
 
     def newStaticTable(self):
-        treeScore = Gtk.TreeStore(str, str, str, str, str, str, str, str)
+        treeScore = Gtk.TreeStore(str, str, str, str, str, str, str, str, str)
         treeView = Gtk.TreeView(model=treeScore)
 
         titleRenderer = Gtk.CellRendererText()
+        nRenderer     = Gtk.CellRendererText()
         nXRenderer    = Gtk.CellRendererText()
         posXRenderer  = Gtk.CellRendererText()
         posYRenderer  = Gtk.CellRendererText()
@@ -375,15 +376,17 @@ class CreateMenu:
         sizeYRenderer = Gtk.CellRendererText()
 
         columnTitle   = Gtk.TreeViewColumn("Name", titleRenderer, text = 0)
-        columnNX      = Gtk.TreeViewColumn("Tile on X", nXRenderer, text = 1)
-        columnPosX    = Gtk.TreeViewColumn("Position x", posXRenderer, text = 2)
-        columnPosY    = Gtk.TreeViewColumn("Position y", posYRenderer, text = 3)
-        columnSpacX   = Gtk.TreeViewColumn("Spacing x", spacXRenderer, text = 4)
-        columnSpacY   = Gtk.TreeViewColumn("Spacing y", spacYRenderer, text = 5)
-        columnSizeX   = Gtk.TreeViewColumn("Tile size x", sizeXRenderer, text = 6)
-        columnSizeY   = Gtk.TreeViewColumn("Tile size y", sizeYRenderer, text = 7)
+        columnN       = Gtk.TreeViewColumn("Number of Tiles", nRenderer, text=1)
+        columnNX      = Gtk.TreeViewColumn("Tile on X", nXRenderer, text = 2)
+        columnPosX    = Gtk.TreeViewColumn("Position x", posXRenderer, text = 3)
+        columnPosY    = Gtk.TreeViewColumn("Position y", posYRenderer, text = 4)
+        columnSpacX   = Gtk.TreeViewColumn("Spacing x", spacXRenderer, text = 5)
+        columnSpacY   = Gtk.TreeViewColumn("Spacing y", spacYRenderer, text = 6)
+        columnSizeX   = Gtk.TreeViewColumn("Tile size x", sizeXRenderer, text = 7)
+        columnSizeY   = Gtk.TreeViewColumn("Tile size y", sizeYRenderer, text = 8)
 
         treeView.append_column(columnTitle)
+        treeView.append_column(columnN)
         treeView.append_column(columnNX)
         treeView.append_column(columnPosX)
         treeView.append_column(columnPosY)
@@ -489,48 +492,54 @@ class CreateMenu:
         vGrid.add(grid)
         vGrid.add(hbox)
 
-        imagePixbuf = GdkPixbuf.Pixbuf.new_from_file(widgets['imageEntered'].get_text())
-        nameLabel = Gtk.Label("Name")
-        nXLabel = Gtk.Label("Tiles per rows")
+        imagePixbuf         = GdkPixbuf.Pixbuf.new_from_file(widgets['imageEntered'].get_text())
+        nameLabel           = Gtk.Label("Name")
+        nLabel              = Gtk.Label("Number of Tiles")
+        nXLabel             = Gtk.Label("Tiles per rows")
 
-        titleLabel = Gtk.Label()
-        xLabel = Gtk.Label("Position X")
-        yLabel = Gtk.Label("Position Y")
-        spacXLabel = Gtk.Label("Spacing X")
-        spacYLabel = Gtk.Label("Spacing Y")
-        sizeXLabel = Gtk.Label("Tile Size X")
-        sizeYLabel = Gtk.Label("Tile Size Y")
+        titleLabel          = Gtk.Label()
+        xLabel              = Gtk.Label("Position X")
+        yLabel              = Gtk.Label("Position Y")
+        spacXLabel          = Gtk.Label("Spacing X")
+        spacYLabel          = Gtk.Label("Spacing Y")
+        sizeXLabel          = Gtk.Label("Tile Size X")
+        sizeYLabel          = Gtk.Label("Tile Size Y")
 
-        nameEntry = Gtk.Entry()
-        nXAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0) 
-        positionXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0) 
-        positionYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
+        nameEntry           = Gtk.Entry()
+        nAdjustment         = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0)
+        nXAdjustment        = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0)
+        positionXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0)
+        positionYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0)
 
-        spacXAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0) 
-        spacYAdjustment = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0) 
+        spacXAdjustment     = Gtk.Adjustment(0, 0, imagePixbuf.get_width(), 1, 10, 0)
+        spacYAdjustment     = Gtk.Adjustment(0, 0, imagePixbuf.get_height(), 1, 10, 0)
 
-        sizeXAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0) 
-        sizeYAdjustment = Gtk.Adjustment(1, 1, imagePixbuf.get_height(), 1, 10, 0) 
+        sizeXAdjustment     = Gtk.Adjustment(1, 1, imagePixbuf.get_width(), 1, 10, 0)
+        sizeYAdjustment     = Gtk.Adjustment(1, 1, imagePixbuf.get_height(), 1, 10, 0)
 
-        nXSpin = Gtk.SpinButton(adjustment=nXAdjustment)
-        xSpin = Gtk.SpinButton(adjustment=positionXAdjustment)
-        ySpin = Gtk.SpinButton(adjustment=positionYAdjustment)
-        spacXSpin = Gtk.SpinButton(adjustment=spacXAdjustment)
-        spacYSpin = Gtk.SpinButton(adjustment=spacYAdjustment)
-        sizeXSpin = Gtk.SpinButton(adjustment=sizeXAdjustment)
-        sizeYSpin = Gtk.SpinButton(adjustment=sizeYAdjustment)
+        nSpin               = Gtk.SpinButton(adjustment = nAdjustment)
+        nXSpin              = Gtk.SpinButton(adjustment = nXAdjustment)
+        xSpin               = Gtk.SpinButton(adjustment = positionXAdjustment)
+        ySpin               = Gtk.SpinButton(adjustment = positionYAdjustment)
+        spacXSpin           = Gtk.SpinButton(adjustment = spacXAdjustment)
+        spacYSpin           = Gtk.SpinButton(adjustment = spacYAdjustment)
+        sizeXSpin           = Gtk.SpinButton(adjustment = sizeXAdjustment)
+        sizeYSpin           = Gtk.SpinButton(adjustment = sizeYAdjustment)
 
-        addEntity = Gtk.Button(label="Add")
-        resetEntity = Gtk.Button(label="Reset")
+        addEntity           = Gtk.Button(label = "Add")
+        resetEntity         = Gtk.Button(label = "Reset")
 
-        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        separator           = Gtk.Separator(orientation = Gtk.Orientation.HORIZONTAL)
 
         grid.attach(nameLabel, 0,0,1,1)
         grid.attach_next_to(nameEntry, nameLabel, Gtk.PositionType.RIGHT, 1, 2)
         grid.attach_next_to(separator, nameLabel, Gtk.PositionType.BOTTOM, 3, 1)
         grid.attach_next_to(titleLabel, separator, Gtk.PositionType.BOTTOM, 4, 1)
 
-        grid.attach_next_to(nXLabel, titleLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(nLabel, titleLabel, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(nSpin, nLabel, Gtk.PositionType.RIGHT, 2, 1)
+
+        grid.attach_next_to(nXLabel, nLabel, Gtk.PositionType.BOTTOM, 1, 1)
         grid.attach_next_to(nXSpin, nXLabel, Gtk.PositionType.RIGHT, 2, 1)
 
         grid.attach_next_to(xLabel, nXLabel, Gtk.PositionType.BOTTOM, 1, 1)
@@ -556,6 +565,7 @@ class CreateMenu:
 
         widgets['nameAnnimEntered'] = nameEntry
 
+        widgets['n'] = nSpin
         widgets['nX'] = nXSpin
         widgets['positionX'] = xSpin
         widgets['positionY'] = ySpin
@@ -649,6 +659,7 @@ class CreateMenu:
             return
 
         parent = widgets['treeStore'].append(None, row = [name,\
+                str(int(widgets['n'].get_value())),\
                 str(int(widgets['nX'].get_value())),\
                 str(int(widgets['positionX'].get_value())),\
                 str(int(widgets['positionY'].get_value())),\
