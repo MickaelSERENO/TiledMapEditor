@@ -351,15 +351,15 @@ class TileBox(Gtk.ScrolledWindow):
 
     #return the file ID. The number one is the first static file. 1 ID per file
     def getFileID(self, fileName, style="static"):
-        if style == "static":
-            for i in range(len(self.staticList)):
-                if self.staticList[i].fileName == fileName:
-                    return i
-        else:
-            print(fileName)
-            l = list(self.animationDict.keys())
-            if l.count(fileName):
-                return len(self.staticList)+l.index(fileName)
+
+#        if style == "static":
+        for i in range(len(self.staticList)):
+            if self.staticList[i].fileName == fileName:
+                return i
+#        else:
+        l = list(self.animationDict.keys())
+        if l.count(fileName):
+            return len(self.staticList)+l.index(fileName)
         return -1
 
     def getFileName(self, fileID):
@@ -488,11 +488,18 @@ class TileBox(Gtk.ScrolledWindow):
         else:
             i=0
             for orderedDict in self.animationDict.values():
-                for dynamicIconView in orderedDict['dynamic']:
-                    if i == fileID-len(self.staticList):
+                if i == fileID-len(self.staticList):
+                    for dynamicIconView in orderedDict['dynamic']:
                         if dynamicIconView.getAnimName() == animName:
                             return dynamicIconView.getDndDatasFromPath(tileID)
-                    i=i+1
+
+                    for dynamicIconView in orderedDict['static']:
+                        if dynamicIconView.getAnimName() == animName:
+                            return dynamicIconView.getDndDatasFromPath(tileID)
+                    break
+                i=i+1
+        return None
+
 
 class DragIconView(Gtk.IconView):
     def __init__(self, model, numColumn, fileName):
@@ -591,6 +598,7 @@ class DynamicAnimationDragIconView(DragIconView):
         selected_iter = self.get_model().get_iter(path)
 
         return {'tileID':self.get_model().get_value(selected_iter, 0).tileID,\
+                'name':self.get_name(),\
                 'animName':self.get_name(), 'fileName':self.fileName,\
                 'numColumn':self.numColumn,\
                 'style':self.style,\
@@ -607,10 +615,22 @@ class StaticAnimationDragIconView(DragIconView):
         self.spac  = spac
         self.size  = size
 
+    def do_drag_data_get(self, widget, context, selection_data, info, time=None):
+        if time:
+            selected_path = self.get_selected_items()[0]
+            selected_iter = self.get_model().get_iter(selected_path)
+            selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
+
+            TileBox.dndDatas = self.getDndDatasFromPath(selected_path)
+
+    def getAnimName(self):
+        return self.get_name()
+
+
     def getDndDatasFromPath(self, path):
         selected_iter = self.get_model().get_iter(path)
         return {'from':'TileBox', 'spacing':self.spac, 'size':self.size,\
-                'position':self.pos,\
+                'position':self.pos, 'animName':self.get_name(),\
                 'fileName':self.fileName, 'name':self.get_name(),\
                 'numColumn':self.numColumn, 'style':self.style,\
                 'subRect':self.get_model().get_value(selected_iter, 0).rect,

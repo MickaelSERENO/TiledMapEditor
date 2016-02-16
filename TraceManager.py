@@ -116,18 +116,31 @@ class TraceManager(Gtk.Box):
                 staticTraceElem.set('shift', str(trace.shift.x) + 'x' + str(trace.shift.y))
                 staticTraceElem.set('name', trace.name)
                 for column in trace.listStaticTile:
-                    columnSubElem = ET.SubElement(staticTraceElem, "Column")
-                    columnTileID = io.StringIO()
-                    columnFileID = io.StringIO()
+                    columnSubElem  = ET.SubElement(staticTraceElem, "Column")
+
+                    columnTileID   = io.StringIO()
+                    columnFileID   = io.StringIO()
                     columnObjectID = io.StringIO()
 
-                    columnTileRow = []
-                    columnFileRow = []
+                    columnAnimationTileID   = io.StringIO()
+                    columnAnimationFileID   = io.StringIO()
+                    columnAnimationName     = io.StringIO()
+
+                    columnTileRow   = []
+                    columnFileRow   = []
                     columnObjectRow = []
+
+                    columnAnimationNameRow   = []
+                    columnAnimationFileIDRow = []
+                    columnAnimationTileIDRow = []
 
                     tileCSV = csv.writer(columnTileID)
                     fileCSV = csv.writer(columnFileID)
                     objectCSV = csv.writer(columnObjectID)
+
+                    nameAnimationCSV = csv.writer(columnAnimationName)
+                    tileIDAnimationCSV = csv.writer(columnAnimationTileID)
+                    fileIDAnimationCSV = csv.writer(columnAnimationFileID)
 
                     for tile in column:
                         if tile:
@@ -135,26 +148,60 @@ class TraceManager(Gtk.Box):
                                 columnTileRow.append(str(tile.tileID))
                                 columnFileRow.append(str(tileBox.getFileID(tile.fileName, "static")))
                                 columnObjectRow.append('0')
+
+                                columnAnimationNameRow.append("")
+                                columnAnimationFileIDRow.append(-1)
+                                columnAnimationTileIDRow.append(-1)
+
                             elif type(tile)==ObjectTile:
                                 columnTileRow.append(objectManager.getObjectID(tile.name))
                                 columnFileRow.append('-1')
                                 columnObjectRow.append('1')
+
+                                columnAnimationNameRow.append("")
+                                columnAnimationFileIDRow.append(-1)
+                                columnAnimationTileIDRow.append(-1)
+
+                            elif type(tile) == DynamicTile or type(tile) == StaticAnimationTile:
+                                columnAnimationNameRow.append(tile.animName)
+                                columnAnimationFileIDRow.append(str(tileBox.getFileID(tile.fileName, "dynamic")))
+                                columnAnimationTileIDRow.append(str(tile.tileID))
+                                columnTileRow.append('-1')
+                                columnFileRow.append('-1')
+                                columnObjectRow.append('0')
+                                print(tile.animName)
+
                         else:
                             columnTileRow.append('-1')
                             columnFileRow.append('-1')
                             columnObjectRow.append('0')
+                            columnAnimationNameRow.append("")
+                            columnAnimationFileIDRow.append(-1)
+                            columnAnimationTileIDRow.append(-1)
+
                     tileCSV.writerow(columnTileRow)
                     fileCSV.writerow(columnFileRow)
                     objectCSV.writerow(columnObjectRow)
 
-                    columnSubElem.set('tileID', columnTileID.getvalue())
-                    columnSubElem.set('fileID', columnFileID.getvalue())
-                    columnSubElem.set('objectID', columnObjectID.getvalue())
+                    nameAnimationCSV.writerow(columnAnimationNameRow)
+                    tileIDAnimationCSV.writerow(columnAnimationTileIDRow)
+                    fileIDAnimationCSV.writerow(columnAnimationFileIDRow)
+
+                    animColumn   = ET.SubElement(columnSubElem, "Animation")
+                    staticColumn = ET.SubElement(columnSubElem, "Static")
+                    
+                    staticColumn.set('tileID', columnTileID.getvalue())
+                    staticColumn.set('fileID', columnFileID.getvalue())
+                    staticColumn.set('objectID', columnObjectID.getvalue())
+
+                    animColumn.set('tileID', columnAnimationTileID.getvalue())
+                    animColumn.set('fileID', columnAnimationFileID.getvalue())
+                    animColumn.set('name', columnAnimationName.getvalue())
             else:
                 dynamicTraceElem = ET.SubElement(traceElem, 'DynamicTrace')
                 dynamicTraceElem.set('name', trace.name)
                 for tile in trace.listDynamicTile:
-                    if tile.style == "Dynamic":
+                    if tile.style == "DynamicAnimation" or tile.style == "StaticAnimation":
                         tileSubElem = ET.SubElement(dynamicTraceElem, "DynamicTile")  
                         tileSubElem.set('animName', str(tile.animName))
                         tileSubElem.set('animTime', str(tile.animTime))
@@ -190,31 +237,56 @@ class TraceManager(Gtk.Box):
 
             x=0
             for columnElem in staticTraceElem.findall('Column'):
-                columnValues = dict()
-                for items in columnElem.items():
-                    columnValues[items[0]] = items[1]
+                for staticColumn in columnElem.findall('Static'):
+                    columnValues = dict()
+                    for items in staticColumn.items():
+                        columnValues[items[0]] = items[1]
 
-                tileIDListElement = [columnValues['tileID']]
-                tileIDListElement = list(csv.reader(tileIDListElement))
+                    tileIDListElement = [columnValues['tileID']]
+                    tileIDListElement = list(csv.reader(tileIDListElement))
 
-                fileIDListElement = [columnValues['fileID']]
-                fileIDListElement = list(csv.reader(fileIDListElement))
+                    fileIDListElement = [columnValues['fileID']]
+                    fileIDListElement = list(csv.reader(fileIDListElement))
 
-                objectIDListElement = [columnValues['objectID']]
-                objectIDListElement = list(csv.reader(objectIDListElement))
+                    objectIDListElement = [columnValues['objectID']]
+                    objectIDListElement = list(csv.reader(objectIDListElement))
 
-                y=0
-                for tileID, fileID, objectID in\
-                        zip(tileIDListElement[0], fileIDListElement[0], objectIDListElement[0]):
-                    if int(tileID) != -1:
-                        dndDatas = None
-                        if int(fileID) != -1:
-                            dndDatas = tileBox.getDndDatas(int(tileID), int(fileID))
-                        elif int(objectID) == 1:
-                           dndDatas = objectManager.getDndDatas(int(tileID))
-                        staticTrace.addTileFromDnd(x*traceValues['size'].x + traceValues['shift'].x,\
+                    y=0
+                    for tileID, fileID, objectID in\
+                            zip(tileIDListElement[0], fileIDListElement[0], objectIDListElement[0]):
+                        if int(tileID) != -1:
+                            dndDatas = None
+                            if int(fileID) != -1:
+                                dndDatas = tileBox.getDndDatas(int(tileID), int(fileID))
+                                if int(fileID) == 3:
+                                    print(dndDatas)
+                            elif int(objectID) == 1:
+                                dndDatas = objectManager.getDndDatas(int(tileID))
+                            staticTrace.addTileFromDnd(x*traceValues['size'].x + traceValues['shift'].x,\
+                                        y*traceValues['size'].y+traceValues['shift'].y, dndDatas)
+                        y=y+1
+
+                for animationColumn in columnElem.findall('Animation'):
+                    columnValues = dict()
+                    for items in animationColumn.items():
+                        columnValues[items[0]] = items[1]
+
+                    tileIDListElement = [columnValues['tileID']]
+                    tileIDListElement = list(csv.reader(tileIDListElement))
+
+                    fileIDListElement = [columnValues['fileID']]
+                    fileIDListElement = list(csv.reader(fileIDListElement))
+
+                    nameListElement = [columnValues['name']]
+                    nameListElement = list(csv.reader(nameListElement))
+
+                    y = 0
+                    for tileID, fileID, name in zip(tileIDListElement[0], fileIDListElement[0], nameListElement[0]):
+                        if int(tileID) != -1 and int(fileID) != -1 and name != "":
+                            dndDatas = tileBox.getDndDatas(int(tileID), int(fileID), name)
+                            staticTrace.addTileFromDnd(x*traceValues['size'].x + traceValues['shift'].x,\
                                     y*traceValues['size'].y+traceValues['shift'].y, dndDatas)
-                    y=y+1
+                        y=y+1
                 x=x+1
 
         for dynamicTraceElem in dynamicTraceList:
@@ -235,10 +307,13 @@ class TraceManager(Gtk.Box):
                 position = dynamicValue['position'].split('x')
                 position = sf.Vector2(float(position[0]), float(position[1]))
 
+
                 dndDatas = tileBox.getDndDatas(int(dynamicValue['tileID']), int(dynamicValue['fileID']), dynamicValue['animName'])
+                if dndDatas == None:
+                    print(dynamicValue)
                 dynamicTraceWidgets = {"origin" : origin, "position" : position,\
-                        "timeEntry" : int(float(dynamicValue['animTime']))}
-                TileBox.dndDatas = dndDatas
+                        "timeEntry" : int(float(dynamicValue['animTime'])),\
+                        "dndDatas" : dndDatas}
 
                 dynamicTrace.addDynamicTile(dynamicTraceWidgets)
 

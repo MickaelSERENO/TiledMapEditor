@@ -113,12 +113,17 @@ class StaticTrace(Trace):
         if not(len(self.listStaticTile) > indice.x and len(self.listStaticTile[indice.x]) > indice.y):
             return
 
-        if dndDatas['style']=='Static':
+        if dndDatas['style']=='Static' or dndDatas['style'] =='DynamicAnimation' or dndDatas['style'] == 'StaticAnimation':
             self.deleteObjectInListForStatic(indice)
-                        
-            self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
-                    indice*self.tileSize+self.shift, dndDatas['subRect'],\
-                    TileBox.textureList[dndDatas['name']], dndDatas['fileName'])
+            if dndDatas['style'] == 'Static':
+                self.listStaticTile[indice.x][indice.y]=StaticTile(dndDatas['tileID'],\
+                        indice*self.tileSize+self.shift, dndDatas['subRect'],\
+                        TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'])
+            else:
+                self.listStaticTile[indice.x][indice.y]=StaticAnimationTile(dndDatas['tileID'],\
+                        dndDatas['animName'], indice*self.tileSize+self.shift, \
+                        dndDatas['subRect'],\
+                        TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'])
 
         elif dndDatas['style'] == 'Object':
             self.deleteObjectInListForObject(indice, dndDatas['name'])
@@ -179,7 +184,7 @@ class StaticTrace(Trace):
                     coord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
 
                     indice = None
-                    if type(self.tileMoving) is StaticTile:
+                    if type(self.tileMoving) is StaticTile or type(self.tileMoving) is StaticAnimationTile:
                         indice = sf.Vector2(min(\
                                 int(max((coord.x, self.shift.x)) / self.tileSize.x),\
                                 len(self.listStaticTile)-1),\
@@ -239,7 +244,6 @@ class StaticTrace(Trace):
                     objIndice = sf.Vector2(int((obj.position.x-self.shift.x)/self.tileSize.x), int((obj.position.y-self.shift.y)/self.tileSize.y))
                     if objIndice.x <= indice.x and objIndice.y <= indice.y and\
                             indice.x < objIndice.x + obj.numberCase.x and indice.y < objIndice.y + obj.numberCase.y:
-                        print(indice-objIndice)
                         if tileID[indice.x-objIndice.x][indice.y-objIndice.y] != -1:
                             self.listStaticTile[i][j] = None
 
@@ -414,6 +418,7 @@ class DynamicTrace(Trace):
         origin = sf.Vector2(widgets['xOriginEntry'].get_value(), widgets['yOriginEntry'].get_value())
         widgets['timeEntry'] = widgets['timeEntry'].get_value()
         widgets['origin'] = origin
+        widgets['dndDatas'] = TileBox.dndDatas
 
         self.addDynamicTile(widgets)
         if 'window' in widgets:
@@ -425,8 +430,7 @@ class DynamicTrace(Trace):
                 return tile
 
     def addDynamicTile(self, widgets):
-        dndDatas = TileBox.dndDatas
-        print(dndDatas)
+        dndDatas = widgets['dndDatas']
         self.listDynamicTile.append(DynamicTile(dndDatas['tileID'], \
                 widgets['timeEntry'], widgets['origin'], widgets['position'],\
                 dndDatas['subRect'], TileBox.textureList[dndDatas['fileName']], dndDatas['fileName'],\
@@ -472,11 +476,19 @@ class StaticTile(Tile):
                 madeByObject, sfmlRenderer)
         self.style = "Static"
 
+class StaticAnimationTile(Tile):
+    def __init__(self, tileID, animName, position, subRect, texture, fileName,\
+            madeByObject=False, sfmlRenderer='sfmlArea'):
+        Tile.__init__(self, tileID, position, subRect, texture, fileName,\
+                madeByObject, sfmlRenderer)
+        self.style    = "StaticAnimation"
+        self.animName = animName
+
 class DynamicTile(Tile):
     def __init__(self, tileID, animTime, origin, position, subRect, texture, fileName, animName,\
             madeByObject=False, sfmlRenderer='sfmlArea'):
         Tile.__init__(self, tileID, position, subRect, texture, fileName, madeByObject, sfmlRenderer)
-        self.style = "Dynamic"
+        self.style = "DynamicAnimation"
         self.animTime = animTime
         self.origin = origin
         self.animName = animName
