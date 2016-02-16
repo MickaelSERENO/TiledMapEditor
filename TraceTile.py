@@ -184,7 +184,7 @@ class StaticTrace(Trace):
                     coord = globalVar.sfmlArea.convertCoord(sf.Vector2(event.x, event.y))
 
                     indice = None
-                    if type(self.tileMoving) is StaticTile or type(self.tileMoving) is StaticAnimationTile:
+                    if type(self.tileMoving) == StaticTile or type(self.tileMoving) == StaticAnimationTile or type(self.tileMoving) == DynamicTile:
                         indice = sf.Vector2(min(\
                                 int(max((coord.x, self.shift.x)) / self.tileSize.x),\
                                 len(self.listStaticTile)-1),\
@@ -193,6 +193,7 @@ class StaticTrace(Trace):
                                 len(self.listStaticTile[0])-1))
 
                         self.deleteObjectInListForStatic(indice)
+                        self.listStaticTile[self.indiceTile.x][self.indiceTile.y] = None
 
                     elif type(self.tileMoving) is ObjectTile:
                         indice = sf.Vector2(min(\
@@ -212,11 +213,9 @@ class StaticTrace(Trace):
                                             self.listStaticTile[indice.x + x][indice.y + y] = None
 
                     self.listStaticTile[indice.x][indice.y] = self.tileMoving
-
                     self.tileMoving.position = self.tileSize * indice + self.shift
                     globalVar.sfmlArea.updateMiniMap()
                     self.tileMoving = None
-
 
         if event.type == Gdk.EventType.KEY_PRESS:
             if event.get_keyval()[1] ==  Gdk.KEY_Control_L:
