@@ -47,6 +47,7 @@ class SFMLArea(Gtk.DrawingArea):
         self.popupDict = dict()
 
         self.typeDict = OrderedDict()
+        self._canUpdateMiniMap = False
 
     def setSlideProperties(self):
         self.vslide.connect("value-changed", self.moveView, "vertical")
@@ -222,6 +223,8 @@ class SFMLArea(Gtk.DrawingArea):
         self.listTrace.append(DynamicTrace(name))
 
     def updateMiniMap(self):
+        if not self._canUpdateMiniMap:
+            return
         self.miniMapRenderTexture = sf.RenderTexture(self.size.x, self.size.y)
         self.miniMapRenderTexture.clear(sf.Color(0,0,0,0))
         for trace in self.listTrace:
@@ -297,6 +300,13 @@ class SFMLArea(Gtk.DrawingArea):
 
     def setProperties(self, button, widgets):
         pass
+
+    def setUpdateMiniMap(self, can):
+        self._canUpdateMiniMap = can
+        if can:
+            self.updateMiniMap()
+
+    canUpdateMiniMap = property(lambda self : self._canUpdateMiniMap, lambda self, u : self.setUpdateMiniMap(u))
 
 class SFMLMakeObject(Gtk.DrawingArea):
     def __init__(self, tileSize, numberCase, nameObject):

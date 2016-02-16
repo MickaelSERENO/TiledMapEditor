@@ -33,10 +33,14 @@ class FileManager():
         xmlTree = ET.parse(fileName)
         xmlRoot = xmlTree.getroot()
 
+
         globalVar.tileWindow.decodeXML(xmlRoot.find('Window'))
+        globalVar.sfmlArea.canUpdateMiniMap = False
         tileBox.decodeXML(xmlRoot.find('Files'), path.dirname(fileName))
         objectManager.decodeXML(xmlRoot.find('Objects'), tileBox)
         traceManager.decodeXML(xmlRoot.find('Traces'), tileBox, objectManager)
+
+        globalVar.sfmlArea.canUpdateMiniMap = True
 
         self.xmlFile = fileName
 
