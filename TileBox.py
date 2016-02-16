@@ -136,8 +136,6 @@ class TileBox(Gtk.ScrolledWindow):
         self.animationDict[fileName] = dict()
         self.animationDict[fileName]['static'] = list()
         self.animationDict[fileName]['dynamic'] = list()
-        print("decode")
-        print(fileName)
 
         if dynamicTreeStore:
             for i in range(len(dynamicTreeStore)):
@@ -347,6 +345,14 @@ class TileBox(Gtk.ScrolledWindow):
                 animationSubElem.set('spacing', str(view.spac.x) + 'x' + str(view.spac.y))
                 animationSubElem.set('size', str(view.size.x) + 'x' + str(view.size.y))
                 
+                tileIter = view.get_model().get_iter_first()
+                while tileIter:
+                    tile = view.get_model().get_value(tileIter, 0)
+                    tileSubElem = ET.SubElement(animationSubElem, 'staticTile')
+                    tileSubElem.set('name', tile.name)
+                    tileSubElem.set('type', tile.type)
+                    tileIter = view.get_model().iter_next(tileIter)
+                
         return fileElem
 
     #return the file ID. The number one is the first static file. 1 ID per file
@@ -420,19 +426,20 @@ class TileBox(Gtk.ScrolledWindow):
             staticTreeStore = Gtk.TreeStore(str, str, str, str, str, str, str, str, str)
 
             #Get dynamic Animation
+            dynamicValueDict = OrderedDict()
+            staticValueDict = OrderedDict()
+
             for dynamicElement in listDynamicElement:
-                tileValueDict = OrderedDict()
 
                 animationValuesEntity = OrderedDict()
                 for animationItem in dynamicElement.items():
                     animationValuesEntity[animationItem[0]] = animationItem[1]
-                tileValueDict[animationValuesEntity['name']] = []
+                dynamicValueDict[animationValuesEntity['name']] = []
 
                 parent = dynamicTreeStore.append(None)
                 dynamicTreeStore.set_value(parent, 0, animationValuesEntity['name'])
 
                 posTileEntity = 0
-                iterTilePassFirst = False
                 for tileEntity in dynamicElement:
                     tileValuesEntity = OrderedDict()
                     for tileItem in tileEntity.items():
@@ -448,7 +455,7 @@ class TileBox(Gtk.ScrolledWindow):
                             [str(posTileEntity), str(tileValuesEntity['pos'].x), str(tileValuesEntity['pos'].y), \
                             str(tileValuesEntity['size'].x), str(tileValuesEntity['size'].y)])
 
-                    tileValueDict[animationValuesEntity['name']].append(tileValuesEntity)
+                    dynamicValueDict[animationValuesEntity['name']].append(tileValuesEntity)
                     posTileEntity+=1
 
             #Get static animation value
@@ -456,6 +463,7 @@ class TileBox(Gtk.ScrolledWindow):
                 animationValuesEntity = OrderedDict()
                 for animationItem in staticElement.items():
                     animationValuesEntity[animationItem[0]] = animationItem[1]
+                staticValueDict[animationValuesEntity['name']] = []
 
                 name = animationValuesEntity['name']
                 n = animationValuesEntity['n']
@@ -469,13 +477,29 @@ class TileBox(Gtk.ScrolledWindow):
                         spacSplit[0], spacSplit[1],\
                         sizeSplit[0], sizeSplit[1]])
 
+                for tileEntity in staticElement:
+                    tileValuesEntity = OrderedDict()
+                    for tileItem in tileEntity.items():
+                        tileValuesEntity[tileItem[0]] = tileItem[1]
+                    staticValueDict[animationValuesEntity['name']].append(tileValuesEntity)
+
             self.cutAnimationTreeStore(dynamicTreeStore, staticTreeStore, dynamicValuesElement['file'])
 
             currentOrderedDict = self.animationDict[dynamicValuesElement['file']]
             currentDynamicList = currentOrderedDict['dynamic']
+            currentStaticList  = currentOrderedDict['static']
             for iconView in currentDynamicList:
                 tileIter = iconView.get_model().get_iter_first()
-                for tileDict in tileValueDict[iconView.get_name()]:
+                for tileDict in dynamicValueDict[iconView.get_name()]:
+                    tile = iconView.get_model().get_value(tileIter, 0)
+
+                    tile.name = tileDict['name']
+                    tile.type = tileDict['type']
+                    tileIter = iconView.get_model().iter_next(tileIter)
+
+            for iconView in currentStaticList:
+                tileIter = iconView.get_model().get_iter_first()
+                for tileDict in staticValueDict[iconView.get_name()]:
                     tile = iconView.get_model().get_value(tileIter, 0)
 
                     tile.name = tileDict['name']
@@ -509,6 +533,8 @@ class DragIconView(Gtk.IconView):
         self.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, [], Gdk.DragAction.COPY)
         self.connect("drag-data-get", self.do_drag_data_get)
         self.connect("button-press-event", self.buttonPressEvent)
+        self.connect("item_activated", self.manageDndDatas)
+        self.connect("selection-changed", self.manageDndDatas, None)
 
         targets = Gtk.TargetList.new([])
         targets.add_image_targets(0, True)
@@ -516,6 +542,22 @@ class DragIconView(Gtk.IconView):
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
         return
+
+    def setDndDatas(self):
+        if not self.get_selected_items():
+            TileBox.dndDatas = None
+            return
+        selected_path = self.get_selected_items()[0]
+        selected_iter = self.get_model().get_iter(selected_path)
+
+        TileBox.dndDatas = self.getDndDatasFromPath(selected_path)
+
+
+    def manageDndDatas(self, widget, path):
+        self.setDndDatas()
+
+    def getDndDatasFromPath(self, path):
+        return None
 
     def buttonPressEvent(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -546,8 +588,6 @@ class StaticDragIconView(DragIconView):
         self.size = size
         self.spacing = spacing
         self.style = "Static"
-        self.connect("item_activated", self.manageDndDatas)
-        self.connect("selection-changed", self.manageDndDatas, None)
 
     def do_drag_data_get(self, widget, context, selection_data, info, time=None):
         if time:
@@ -555,18 +595,6 @@ class StaticDragIconView(DragIconView):
             selected_path = self.get_selected_items()[0]
             selected_iter = self.get_model().get_iter(selected_path)
             selection_data.set_pixbuf(self.get_model().get_value(selected_iter, 0))
-
-    def setDndDatas(self):
-        if not self.get_selected_items():
-            TileBox.dndDatas = None
-            return
-        selected_path = self.get_selected_items()[0]
-        selected_iter = self.get_model().get_iter(selected_path)
-
-        TileBox.dndDatas = self.getDndDatasFromPath(selected_path)
-
-    def manageDndDatas(self, widget, path):
-        self.setDndDatas()
 
     def getDndDatasFromPath(self, path):
         selected_iter = self.get_model().get_iter(path)
