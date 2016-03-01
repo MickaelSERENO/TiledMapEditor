@@ -77,8 +77,7 @@ class SFMLArea(Gtk.DrawingArea):
         self.hslide.set_adjustment(Gtk.Adjustment(self.render.view.center.x - self.render.view.size.x/2.0,\
                 0, difSize.x, difSize.x/self.sizeCase.x, difSize.x, self.sizeCase.x))
 
-        self.miniMap.update(self.miniMapSprite, self.render.view.center - self.render.view.size/2.0,\
-                self.render.view.size)
+        self.updateMiniMap()
     def moveView(self, scroll, orientation):
         vector = sf.Vector2()
         if orientation == "vertical":
@@ -89,8 +88,7 @@ class SFMLArea(Gtk.DrawingArea):
                     (self.render.view.center.x - self.render.view.size.x / 2.0)
 
         self.render.view.move(vector.x, vector.y)
-        self.miniMap.update(self.miniMapSprite, self.render.view.center - self.render.view.size/2.0,\
-                self.render.view.size)
+        self.updateMiniMap()
 
     def makePopupAction(self, actionGroup):
         actionGroup.get_action("DelCase").connect("activate", self.manageTile, "delete")
@@ -238,11 +236,19 @@ class SFMLArea(Gtk.DrawingArea):
                     if tile:
                         self.miniMapRenderTexture.draw(tile.sprite)
 
+        position = self.render.view.center - self.render.view.size/2
+        rectangleShape = sf.RectangleShape()
+        rectangleShape.size = self.render.view.size - sf.Vector2(2*10,2*10)
+        rectangleShape.position = position + sf.Vector2(10,10)
+        rectangleShape.outline_color = sf.Color(255,0,0,255)
+        rectangleShape.fill_color = sf.Color(0,0,0,0)
+        rectangleShape.outline_thickness = 10
+
+        self.miniMapRenderTexture.draw(rectangleShape)
 
         self.miniMapRenderTexture.display()
         self.miniMapSprite = sf.Sprite(self.miniMapRenderTexture.texture)
-        self.miniMap.update(self.miniMapSprite,self.render.view.center - self.render.view.size/2,\
-                self.render.view.size)
+        self.miniMap.update(self.miniMapRenderTexture)
 
     def windowSetTileProperties(self, widget):
         window = Gtk.Window(title="Set tile properties")

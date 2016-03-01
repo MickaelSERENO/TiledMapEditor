@@ -49,7 +49,7 @@ class TileWindow(Gtk.Window):
 
         self.panedSFML_toolPaned = Gtk.Paned()
         self.panedSFML_toolPaned.add1(self.sfmlTilePaned)
-        self.panedSFML_toolPaned.pack2(self.toolPaned, False, True)
+        self.panedSFML_toolPaned.pack2(self.toolPaned, False, False)
         self.panedSFML_toolPaned.connect('notify::position', self.handleToolPanedMoving)
         self.panedSFML_toolPaned.set_property('position-set', True)
         self.panedSFML_toolPaned.set_position(600)
@@ -157,6 +157,7 @@ class TileWindow(Gtk.Window):
         newObjectAction.connect("activate", self.objectManager.promptAddObject)
 
         changeSizeAction = Gtk.Action("ChangeSize", "Chan_ge size", None, None)
+        changeSizeAction.connect("activaye", self.promptSetSize)
 
     def makeToolMenuAction(self, actionGroup):
         toolsMenuAction = Gtk.Action("ToolsMenu", "_Tools", None, None)
@@ -205,6 +206,9 @@ class TileWindow(Gtk.Window):
     
     def newFile(self, widget):
         self.newContents.newFile(self.fileManager)
+
+    def promptSetSize(self, widget):
+        self.newContents.setSize()
 
     def getSaveFileElem(self):
         windowElem = ET.Element('Window')

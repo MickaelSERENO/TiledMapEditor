@@ -776,6 +776,9 @@ class CreateMenu:
         if 'window' in widgets:
             widgets['window'].destroy()
 
+    def setSize(self):
+        return
+
     def quitWindow(self, *args, **kwargs):
         args[1].destroy()
 
