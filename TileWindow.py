@@ -157,7 +157,7 @@ class TileWindow(Gtk.Window):
         newObjectAction.connect("activate", self.objectManager.promptAddObject)
 
         changeSizeAction = Gtk.Action("ChangeSize", "Chan_ge size", None, None)
-        changeSizeAction.connect("activaye", self.promptSetSize)
+        changeSizeAction.connect("activate", self.promptSetSize)
 
     def makeToolMenuAction(self, actionGroup):
         toolsMenuAction = Gtk.Action("ToolsMenu", "_Tools", None, None)
